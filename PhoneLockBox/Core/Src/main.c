@@ -79,6 +79,7 @@ void StateToStr(char* buffer);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+#ifdef DEBUG_OUT
 void StateToStr(char* buffer) {
 
 	switch (state.mode) {
@@ -93,10 +94,11 @@ void StateToStr(char* buffer) {
 		break;
 	}
 }
+#endif /* DEBUG_OUT */
 
 /* USER CODE END 0 */
 
-/**
+/**s
   * @brief  The application entry point.
   * @retval int
   */
