@@ -20,6 +20,7 @@
 #include "main.h"
 #include "stdio.h"
 #include "string.h"
+#include "lcd_driver.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -80,6 +81,98 @@ void StateToStr(char* buffer);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+/* USER CODE BEGIN Includes */
+#include "stm32l4xx_hal.h"
+/* USER CODE END Includes */
+
+/* USER CODE BEGIN PV */
+SPI_HandleTypeDef hspi1;
+/* USER CODE END PV */
+
+/* USER CODE BEGIN PFP */
+static void MX_SPI1_Init(void);
+void LCD_Init(void);
+void LCD_SendCommand(uint8_t cmd);
+void LCD_SendData(uint8_t data);
+void LCD_FillScreen(uint16_t color);
+/* USER CODE END PFP */
+
+/* USER CODE BEGIN 0 */
+void SPI_Send(uint8_t data) {
+    HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
+}
+
+void LCD_SendCommand(uint8_t cmd) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET); // DC low for command
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // CS low
+    SPI_Send(cmd);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // CS high
+}
+
+void LCD_SendData(uint8_t data) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET); // DC high for data
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // CS low
+    SPI_Send(data);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // CS high
+}
+
+void LCD_Init(void) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // Reset display
+    HAL_Delay(10);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    HAL_Delay(120);
+
+    LCD_SendCommand(0x11); // Sleep out
+    HAL_Delay(120);
+
+    LCD_SendCommand(0x3A); // Set pixel format to 16-bit
+    LCD_SendData(0x55);
+
+    LCD_SendCommand(0x36); // Memory Access Control
+    LCD_SendData(0x28);    // Adjust rotation
+
+    LCD_SendCommand(0x29); // Display ON
+}
+
+void LCD_FillScreen(uint16_t color) {
+    LCD_SendCommand(0x2A); // Column Address Set
+    LCD_SendData(0x00);
+    LCD_SendData(0x00);
+    LCD_SendData(0x01);
+    LCD_SendData(0x3F);
+
+    LCD_SendCommand(0x2B); // Page Address Set
+    LCD_SendData(0x00);
+    LCD_SendData(0x00);
+    LCD_SendData(0x01);
+    LCD_SendData(0xDF);
+
+    LCD_SendCommand(0x2C); // Memory Write
+
+    for (uint32_t i = 0; i < (480 * 320); i++) {
+        LCD_SendData(color >> 8);
+        LCD_SendData(color & 0xFF);
+    }
+}
+
+static void MX_SPI1_Init(void) {
+    hspi1.Instance = SPI1;
+    hspi1.Init.Mode = SPI_MODE_MASTER;
+    hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+    hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+    hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+    hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi1.Init.NSS = SPI_NSS_SOFT;
+    hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+    hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+    hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    hspi1.Init.CRCPolynomial = 10;
+    if (HAL_SPI_Init(&hspi1) != HAL_OK) {
+        Error_Handler();
+    }
+}
+/* USER CODE END 0 */
 #ifdef DEBUG_OUT
 void StateToStr(char* buffer) {
 
@@ -132,9 +225,14 @@ int main(void)
 
   /* USER CODE END SysInit */
 
-  /* Initialize all configured peripherals */
+/* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_LPUART1_UART_Init();
+  MX_LPUART1_UART_Init();  // initialize UART before using debug messages
+  MX_SPI1_Init();          // initialize SPI before using the display
+  LCD_Init();              // now can initialize the display
+  LCD_FillScreen(0xF800);  // test: fill screen with red
+
+
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
