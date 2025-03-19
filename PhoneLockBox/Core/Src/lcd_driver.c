@@ -1,10 +1,8 @@
  
 #include "lcd_driver.h"
 
-extern SPI_HandleTypeDef hspi1;
-
 void SPI_Send(uint8_t data) {
-    HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
+    //HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
 }
 
 void LCD_SendCommand(uint8_t cmd) {
