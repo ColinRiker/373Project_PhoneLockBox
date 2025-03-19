@@ -73,6 +73,7 @@ static void MX_LPUART1_UART_Init(void);
 #ifdef DEBUG_OUT
 void StateToStr(char* buffer);
 #endif /* DEBUG_OUT */
+//Random Change
 
 /* USER CODE END PFP */
 
