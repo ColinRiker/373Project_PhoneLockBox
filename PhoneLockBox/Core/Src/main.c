@@ -30,8 +30,14 @@
 
 // The FSM States, called mode to not be confused with the state struct.
 enum {
-	UNLOCKED,
-	LOCKED,
+	UNLOCKED_EMPTY_AWAKE,
+	UNLOCKED_EMPTY_ASLEEP,
+	UNLOCKED_FULL_ASLEEP,
+	UNLOCKED_FULL_AWAKE,
+
+	LOCKED_FULL_AWAKE,
+	LOCKED_FULL_ASLEEP,
+	LOCKED_FULL_NOTIFICATION,
 } typedef BoxMode;
 
 // Defines the global state struct.
@@ -72,6 +78,8 @@ static void MX_LPUART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
+int RotaryEncoder_StateResolve(void);
+
 #ifdef DEBUG_OUT
 void StateToStr(char* buffer);
 #endif /* DEBUG_OUT */
@@ -81,6 +89,9 @@ void StateToStr(char* buffer);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+
+
+#ifdef DEBUG_OUT
 void StateToStr(char* buffer) {
 
 	switch (state.mode) {
@@ -95,6 +106,7 @@ void StateToStr(char* buffer) {
 		break;
 	}
 }
+#endif
 
 /* USER CODE END 0 */
 
