@@ -1,5 +1,28 @@
  
 #include "lcd_driver.h"
+#include "stm32l4xx_hal.h"
+
+extern SPI_HandleTypeDef hspi1;
+
+uint32_t LCD_ReadID(void) {
+    uint8_t cmd = 0x04;  // Read Display ID command
+    uint8_t rxData[4] = {0xFF, 0xFF, 0xFF, 0xFF};  // Initialize with non-zero values
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // CS LOW
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET); // DC LOW (Command Mode)
+
+    HAL_SPI_Transmit(&hspi1, &cmd, 1, HAL_MAX_DELAY);  // Send command
+    HAL_SPI_Receive(&hspi1, rxData, 4, HAL_MAX_DELAY);  // Read 4 bytes
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // CS HIGH
+
+    uint32_t displayID = (rxData[0] << 24) | (rxData[1] << 16) | (rxData[2] << 8) | rxData[3];
+
+    // Debug print SPI response
+    printf("SPI Response: %02X %02X %02X %02X\n", rxData[0], rxData[1], rxData[2], rxData[3]);
+
+    return displayID;
+}
 
 void SPI_Send(uint8_t data) {
     //HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
