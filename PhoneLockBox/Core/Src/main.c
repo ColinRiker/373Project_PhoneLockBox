@@ -18,13 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stdio.h"
-#include "string.h"
-#include "lcd_driver.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,6 +55,8 @@ struct {
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
 UART_HandleTypeDef hlpuart1;
 
 /* USER CODE BEGIN PV */
@@ -69,6 +68,7 @@ UART_HandleTypeDef hlpuart1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 #ifdef DEBUG_OUT
@@ -98,6 +98,11 @@ void StateToStr(char* buffer);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
+	        printf("EXTI Interrupt Triggered from KY-037 D0!\n");
+	}//from lab 4--> this is the interrupt that will be generated when any noise is heard
+}
 //void SPI_Send(uint8_t data) {
 //    HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
 //}
@@ -173,26 +178,8 @@ void StateToStr(char* buffer);
 //    }
 //}
 /* USER CODE END 0 */
-#ifdef DEBUG_OUT
-void StateToStr(char* buffer) {
 
-	switch (state.mode) {
-	case (LOCKED):
-		strncpy(buffer, "Locked", DEBUG_BUFFER_SIZE);
-		break;
-	case (UNLOCKED):
-		strncpy(buffer, "Unlocked", DEBUG_BUFFER_SIZE);
-		break;
-	default:
-		strncpy(buffer, "Error", DEBUG_BUFFER_SIZE);
-		break;
-	}
-}
-#endif /* DEBUG_OUT */
-
-/* USER CODE END 0 */
-
-/**s
+/**
   * @brief  The application entry point.
   * @retval int
   */
@@ -225,28 +212,54 @@ int main(void)
 
   /* USER CODE END SysInit */
 
-/* Initialize all configured peripherals */
+  /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_LPUART1_UART_Init();  // initialize UART before using debug messages
-  //MX_SPI1_Init();          // initialize SPI before using the display
-//  LCD_Init();              // now can initialize the display
-//  LCD_FillScreen(0xF800);  // test: fill screen with red
-
-
+  MX_LPUART1_UART_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-
+  uint32_t ADC_VAL = 0; //added for printing mic values
+  float vref = 3.3; // voltage reference for mic
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//	  uint32_t ADC_MIN = 4095;
+//	  uint32_t ADC_MAX = 0;
+//	  uint32_t ADC_SAMPLES = 100; // Number of samples to test signal range
+//
+//	  for (uint32_t i = 0; i < ADC_SAMPLES; i++) {
+//	      HAL_ADC_Start(&hadc1);
+//	      HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+//	      uint32_t adc_val = HAL_ADC_GetValue(&hadc1);
+//
+//	      if (adc_val < ADC_MIN) ADC_MIN = adc_val;
+//	      if (adc_val > ADC_MAX) ADC_MAX = adc_val;
+//
+//	      HAL_Delay(10);  // Small delay between samples
+//	  }
+//
+//	  float min_volt = (ADC_MIN / 4096.0) * 3.3;
+//	  float max_volt = (ADC_MAX / 4096.0) * 3.3;
+//
+//
+//	  printf("Mic ADC Range - MIN: %lu (%.2fV), MAX: %lu (%.2fV)\n", ADC_MIN, min_volt, ADC_MAX, max_volt);
+//	  HAL_Delay(500); // Delay before next round of sampling
+	HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
+	HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
+	ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
+
+	float volt = ADC_VAL/(4096.0) * vref; // not sure if this is needed for mic input
+	printf("ADC %d volt from mic %f\n", (int) ADC_VAL, volt );
+	//i need to set this up for my computer
+	HAL_Delay(100);
     /* USER CODE END WHILE */
 
-	/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 #ifdef DEBUG_OUT
-	  StateToStr(debug_buffer);
-	  printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
+	  //StateToStr(debug_buffer);
+	  //printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
 #endif /* DEBUG_OUT */
   }
   /* USER CODE END 3 */
@@ -297,6 +310,64 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV32;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
   * @brief LPUART1 Initialization Function
   * @param None
   * @retval None
@@ -312,7 +383,7 @@ static void MX_LPUART1_UART_Init(void)
 
   /* USER CODE END LPUART1_Init 1 */
   hlpuart1.Instance = LPUART1;
-  hlpuart1.Init.BaudRate = 115000;
+  hlpuart1.Init.BaudRate = 115200;
   hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
   hlpuart1.Init.StopBits = UART_STOPBITS_1;
   hlpuart1.Init.Parity = UART_PARITY_NONE;
@@ -390,26 +461,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF13_SAI1;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC0 PC1 PC2 PC3
-                           PC4 PC5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PA1 PA3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_3;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA4 PA5 PA6 PA7 */
@@ -426,12 +483,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PB1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB2 PB6 */
@@ -540,10 +591,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PD0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PD2 */
@@ -586,6 +635,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -603,6 +656,7 @@ PUTCHAR_PROTOTYPE
   return ch;
 }
 #endif /* DEBUG_OUT */
+
 
 
 /* USER CODE END 4 */
