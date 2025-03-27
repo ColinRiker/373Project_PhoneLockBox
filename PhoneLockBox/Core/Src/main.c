@@ -45,7 +45,7 @@ struct {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define MAX_TIME 10000
-//#define DEBUG_OUT //Comment out to not compile debug functions and statements
+#define DEBUG_OUT //Comment out to not compile debug functions and statements
 #define DEBUG_BUFFER_SIZE 25
 
 /* USER CODE END PD */
@@ -83,28 +83,40 @@ void StateToStr(char* buffer);
 
 #define SAD_W_M 0x3C
 #define SAD_R_M 0x3D
-#define CTRL_REG1_A 0x20
-#define ACC_FIRST_ADDR 0x28
 
+#define CTRL_REG1_A 0x20
+#define CRA_REG_M 0x00
+#define ACC_FIRST_ADDR 0x28
+#define MAG_FIRST_ADDR 0x03
 
 #define ACC_READ 0x33
 #define ACC_WRITE 0x32
+#define MAG_READ 0x3D
+#define MAG_WRITE 0x3C
+
+
+#define IRA_REG_M 0x0A
+
+void acc_check(){
+  uint8_t buf[10]= {IRA_REG_M};
+  HAL_I2C_Master_Transmit(&hi2c1, SAD_W_M, &buf[0], 1, 1000);
+  uint8_t out_buf[10] = {};
+  HAL_I2C_Master_Receive(&hi2c1, SAD_R_M, &out_buf[0], 1, 1000);
+}
+
 
 
 void acc_init(){
   uint8_t buf[10]= {CTRL_REG1_A,0x97};
   HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 2, 1000);
-
-//
-//
-//  HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 1, 1000);
-//   HAL_I2C_Master_Receive(&hi2c1, ACC_READ, &buf[0], 1, 1000);
-//
-
-
-
 }
 
+void mag_init(){
+	//bin is setting to 3.0 hz
+  uint8_t buf[10]= {CRA_REG_M | (1 << 7),0b00001000,0b01100000,0b00000000};
+  HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 4, 1000);
+
+}
 
 void read_acc(int16_t * x_axis,int16_t * y_axis,int16_t * z_axis){
 
@@ -119,6 +131,25 @@ void read_acc(int16_t * x_axis,int16_t * y_axis,int16_t * z_axis){
   *y_axis =	(out_buf_8[3] << 8) | out_buf_8[2];
   *z_axis = (out_buf_8[5] << 8) | out_buf_8[4];
 }
+
+
+
+void read_mag(int16_t * x_mag,int16_t * y_mag,int16_t * z_mag){
+
+  uint8_t buf[10]= {MAG_FIRST_ADDR | (1 << 7)};
+  HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 1, 1000);
+
+  uint8_t out_buf_8[6] = {};
+  HAL_I2C_Master_Receive(&hi2c1, MAG_READ, &out_buf_8[0], 6, 1000);
+
+
+  *x_mag = (out_buf_8[1] << 8) | out_buf_8[0];
+  *y_mag =	(out_buf_8[3] << 8) | out_buf_8[2];
+  *z_mag = (out_buf_8[5] << 8) | out_buf_8[4];
+}
+
+
+
 void StateToStr(char* buffer) {
 
 	switch (state.mode) {
@@ -172,7 +203,17 @@ int main(void)
   MX_LPUART1_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  //acc_init();
+  acc_init();
+  mag_init();
+
+  int16_t xaxis;
+  int16_t yaxis;
+  int16_t zaxis;
+
+
+  int16_t xmag;
+  int16_t ymag;
+  int16_t zmag;
 
   /* USER CODE END 2 */
 
@@ -181,12 +222,24 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  read_acc(&xaxis,&yaxis,&zaxis);
+	  read_mag(&xmag,&ymag,&zmag);
+
+
+	  float x = xaxis/17500.0;
+	  float y = yaxis/17500.0;
+	  float z = zaxis/17500.0;
+
+
+	  float xm = xmag/17500.0;
+	  float ym = ymag/17500.0;
+	  float zm = zmag/17500.0;
+//	  printf("ACC-> X: %f Y: %f Z: %f \n\r",x,y,z);
+	  printf("MAG-> X: %f Y: %f Z: %f \n\r",xm,ym,zm);
+
 
     /* USER CODE BEGIN 3 */
-#ifdef DEBUG_OUT
-	  StateToStr(debug_buffer);
-	  printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
-#endif /* DEBUG_OUT */
+
   }
   /* USER CODE END 3 */
 }
