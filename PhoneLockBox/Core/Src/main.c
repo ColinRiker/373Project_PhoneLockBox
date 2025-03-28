@@ -21,8 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stdio.h"
-#include "string.h"
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -80,7 +80,6 @@ void StateToStr(char* buffer);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 #define SAD_W_M 0x3C
 #define SAD_R_M 0x3D
 
@@ -148,8 +147,7 @@ void read_mag(int16_t * x_mag,int16_t * y_mag,int16_t * z_mag){
   *z_mag = (out_buf_8[5] << 8) | out_buf_8[4];
 }
 
-
-
+#ifdef DEBUG_OUT
 void StateToStr(char* buffer) {
 
 	switch (state.mode) {
@@ -164,10 +162,10 @@ void StateToStr(char* buffer) {
 		break;
 	}
 }
-
+#endif /* DEBUG_OUT */
 /* USER CODE END 0 */
 
-/**
+/**s
   * @brief  The application entry point.
   * @retval int
   */
