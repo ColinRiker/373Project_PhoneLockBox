@@ -56,7 +56,10 @@ struct {
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+
+ADC_HandleTypeDef hadc1;
 I2C_HandleTypeDef hi2c1;
+
 
 UART_HandleTypeDef hlpuart1;
 
@@ -69,7 +72,9 @@ UART_HandleTypeDef hlpuart1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
+static void MX_ADC1_Init(void);
 static void MX_I2C1_Init(void);
+
 /* USER CODE BEGIN PFP */
 
 #ifdef DEBUG_OUT
@@ -80,6 +85,7 @@ void StateToStr(char* buffer);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 #define SAD_W_M 0x3C
 #define SAD_R_M 0x3D
 
@@ -95,6 +101,12 @@ void StateToStr(char* buffer);
 
 
 #define IRA_REG_M 0x0A
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
+	        printf("EXTI Interrupt Triggered from KY-037 D0!\n");
+	}//from lab 4--> this is the interrupt that will be generated when any noise is heard
+}
 
 void acc_check(){
   uint8_t buf[10]= {IRA_REG_M};
@@ -162,10 +174,11 @@ void StateToStr(char* buffer) {
 		break;
 	}
 }
+
 #endif /* DEBUG_OUT */
 /* USER CODE END 0 */
 
-/**s
+/**
   * @brief  The application entry point.
   * @retval int
   */
@@ -199,15 +212,19 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
+  MX_ADC1_Init();
   MX_I2C1_Init();
+
   /* USER CODE BEGIN 2 */
   acc_init();
   mag_init();
+  
+  uint32_t ADC_VAL = 0; //added for printing mic values
+  float vref = 3.3; // voltage reference for mic
 
   int16_t xaxis;
   int16_t yaxis;
   int16_t zaxis;
-
 
   int16_t xmag;
   int16_t ymag;
@@ -219,8 +236,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
+	HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
+	ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
+
+	float volt = ADC_VAL/(4096.0) * vref; // not sure if this is needed for mic input
+	printf("ADC %d volt from mic %f\n", (int) ADC_VAL, volt );
+	//i need to set this up for my computer
+	HAL_Delay(100);
     /* USER CODE END WHILE */
-	  read_acc(&xaxis,&yaxis,&zaxis);
+
+
+    /* USER CODE BEGIN 3 */
+    read_acc(&xaxis,&yaxis,&zaxis);
 	  read_mag(&xmag,&ymag,&zmag);
 
 
@@ -232,12 +261,12 @@ int main(void)
 	  float xm = xmag/17500.0;
 	  float ym = ymag/17500.0;
 	  float zm = zmag/17500.0;
-//	  printf("ACC-> X: %f Y: %f Z: %f \n\r",x,y,z);
 	  printf("MAG-> X: %f Y: %f Z: %f \n\r",xm,ym,zm);
 
-
-    /* USER CODE BEGIN 3 */
-
+#ifdef DEBUG_OUT
+	  //StateToStr(debug_buffer);
+	  //printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
+#endif /* DEBUG_OUT */
   }
   /* USER CODE END 3 */
 }
@@ -287,6 +316,43 @@ void SystemClock_Config(void)
 }
 
 /**
+
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV32;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+
   * @brief I2C1 Initialization Function
   * @param None
   * @retval None
@@ -322,6 +388,23 @@ static void MX_I2C1_Init(void)
     Error_Handler();
   }
 
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
   /** Configure Digital filter
   */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
@@ -331,6 +414,7 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
 
 }
 
@@ -350,7 +434,7 @@ static void MX_LPUART1_UART_Init(void)
 
   /* USER CODE END LPUART1_Init 1 */
   hlpuart1.Instance = LPUART1;
-  hlpuart1.Init.BaudRate = 115000;
+  hlpuart1.Init.BaudRate = 115200;
   hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
   hlpuart1.Init.StopBits = UART_STOPBITS_1;
   hlpuart1.Init.Parity = UART_PARITY_NONE;
@@ -428,26 +512,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF13_SAI1;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC0 PC1 PC2 PC3
-                           PC4 PC5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PA1 PA3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_3;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA4 PA5 PA6 PA7 */
@@ -464,12 +534,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PB1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB2 PB6 */
@@ -578,10 +642,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PD0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PD2 */
@@ -616,6 +678,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -633,6 +699,7 @@ PUTCHAR_PROTOTYPE
   return ch;
 }
 #endif /* DEBUG_OUT */
+
 
 
 /* USER CODE END 4 */
