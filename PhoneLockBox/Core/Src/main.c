@@ -56,6 +56,8 @@ struct {
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 UART_HandleTypeDef hlpuart1;
 
 /* USER CODE BEGIN PV */
@@ -67,6 +69,7 @@ UART_HandleTypeDef hlpuart1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 #ifdef DEBUG_OUT
@@ -77,6 +80,72 @@ void StateToStr(char* buffer);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#define SAD_W_M 0x3C
+#define SAD_R_M 0x3D
+
+#define CTRL_REG1_A 0x20
+#define CRA_REG_M 0x00
+#define ACC_FIRST_ADDR 0x28
+#define MAG_FIRST_ADDR 0x03
+
+#define ACC_READ 0x33
+#define ACC_WRITE 0x32
+#define MAG_READ 0x3D
+#define MAG_WRITE 0x3C
+
+
+#define IRA_REG_M 0x0A
+
+void acc_check(){
+  uint8_t buf[10]= {IRA_REG_M};
+  HAL_I2C_Master_Transmit(&hi2c1, SAD_W_M, &buf[0], 1, 1000);
+  uint8_t out_buf[10] = {};
+  HAL_I2C_Master_Receive(&hi2c1, SAD_R_M, &out_buf[0], 1, 1000);
+}
+
+
+
+void acc_init(){
+  uint8_t buf[10]= {CTRL_REG1_A,0x97};
+  HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 2, 1000);
+}
+
+void mag_init(){
+	//bin is setting to 3.0 hz
+  uint8_t buf[10]= {CRA_REG_M | (1 << 7),0b00001000,0b01100000,0b00000000};
+  HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 4, 1000);
+
+}
+
+void read_acc(int16_t * x_axis,int16_t * y_axis,int16_t * z_axis){
+
+  uint8_t buf[10]= {ACC_FIRST_ADDR | (1 << 7)};
+  HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 1, 1000);
+
+  uint8_t out_buf_8[6] = {};
+  HAL_I2C_Master_Receive(&hi2c1, ACC_READ, &out_buf_8[0], 6, 1000);
+
+
+  *x_axis = (out_buf_8[1] << 8) | out_buf_8[0];
+  *y_axis =	(out_buf_8[3] << 8) | out_buf_8[2];
+  *z_axis = (out_buf_8[5] << 8) | out_buf_8[4];
+}
+
+
+
+void read_mag(int16_t * x_mag,int16_t * y_mag,int16_t * z_mag){
+
+  uint8_t buf[10]= {MAG_FIRST_ADDR | (1 << 7)};
+  HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 1, 1000);
+
+  uint8_t out_buf_8[6] = {};
+  HAL_I2C_Master_Receive(&hi2c1, MAG_READ, &out_buf_8[0], 6, 1000);
+
+
+  *x_mag = (out_buf_8[1] << 8) | out_buf_8[0];
+  *y_mag =	(out_buf_8[3] << 8) | out_buf_8[2];
+  *z_mag = (out_buf_8[5] << 8) | out_buf_8[4];
+}
 
 #ifdef DEBUG_OUT
 void StateToStr(char* buffer) {
@@ -94,7 +163,6 @@ void StateToStr(char* buffer) {
 	}
 }
 #endif /* DEBUG_OUT */
-
 /* USER CODE END 0 */
 
 /**s
@@ -105,9 +173,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-#ifdef DEBUG_OUT
-	char debug_buffer[DEBUG_BUFFER_SIZE] = {0};
-#endif /* DEBUG_OUT */
+/* DEBUG_OUT */
 
 	state.mode = UNLOCKED;
 	state.time = 0;
@@ -133,7 +199,19 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+  acc_init();
+  mag_init();
+
+  int16_t xaxis;
+  int16_t yaxis;
+  int16_t zaxis;
+
+
+  int16_t xmag;
+  int16_t ymag;
+  int16_t zmag;
 
   /* USER CODE END 2 */
 
@@ -142,12 +220,24 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  read_acc(&xaxis,&yaxis,&zaxis);
+	  read_mag(&xmag,&ymag,&zmag);
 
-	/* USER CODE BEGIN 3 */
-#ifdef DEBUG_OUT
-	  StateToStr(debug_buffer);
-	  printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
-#endif /* DEBUG_OUT */
+
+	  float x = xaxis/17500.0;
+	  float y = yaxis/17500.0;
+	  float z = zaxis/17500.0;
+
+
+	  float xm = xmag/17500.0;
+	  float ym = ymag/17500.0;
+	  float zm = zmag/17500.0;
+//	  printf("ACC-> X: %f Y: %f Z: %f \n\r",x,y,z);
+	  printf("MAG-> X: %f Y: %f Z: %f \n\r",xm,ym,zm);
+
+
+    /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -194,6 +284,54 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x00100D14;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
@@ -468,14 +606,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF6_SPI3;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PE0 */
