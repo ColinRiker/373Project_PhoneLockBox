@@ -31,7 +31,7 @@
 // The FSM States, called mode to not be confused with the state struct.
 enum {
 	UNLOCKED,
-	LOCKED,
+	LOCKED
 } typedef BoxMode;
 
 // Defines the global state struct.
@@ -56,12 +56,10 @@ struct {
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
 ADC_HandleTypeDef hadc1;
 I2C_HandleTypeDef hi2c1;
-
-
 UART_HandleTypeDef hlpuart1;
+TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
 	BoxState state;
@@ -73,9 +71,11 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_TIM1_Init(void);
 static void MX_I2C1_Init(void);
-
 /* USER CODE BEGIN PFP */
+
+int RotaryEncoder_StateResolve(void);
 
 #ifdef DEBUG_OUT
 void StateToStr(char* buffer);
@@ -85,7 +85,6 @@ void StateToStr(char* buffer);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 #define SAD_W_M 0x3C
 #define SAD_R_M 0x3D
 
@@ -174,6 +173,7 @@ void StateToStr(char* buffer) {
 		break;
 	}
 }
+#endif
 
 #endif /* DEBUG_OUT */
 /* USER CODE END 0 */
@@ -213,9 +213,10 @@ int main(void)
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
   MX_ADC1_Init();
-  MX_I2C1_Init();
-
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Encoder_Start_IT(&htim1, TIM_CHANNEL_ALL);
+  MX_I2C1_Init();
   acc_init();
   mag_init();
   
@@ -229,44 +230,48 @@ int main(void)
   int16_t xmag;
   int16_t ymag;
   int16_t zmag;
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-	HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
-	HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
-	ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
-
-	float volt = ADC_VAL/(4096.0) * vref; // not sure if this is needed for mic input
-	printf("ADC %d volt from mic %f\n", (int) ADC_VAL, volt );
-	//i need to set this up for my computer
-	HAL_Delay(100);
     /* USER CODE END WHILE */
 
 
     /* USER CODE BEGIN 3 */
+	  StateToStr(debug_buffer);
+	  printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
+    
+    //ADC
+    HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
+	  HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
+	  ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
+
+	  float volt = ADC_VAL/(4096.0) * vref; // not sure if this is needed for mic input
+	  printf("ADC %d volt from mic %f\n", (int) ADC_VAL, volt );
+    //END ADC
+    
+    //ENCODER
+	  printf("Encoder CNT: %lu\n\r", TIM1->CNT);
+	  HAL_Delay(1000);
+    //END ENCODER
+    
+    //ACCEL
     read_acc(&xaxis,&yaxis,&zaxis);
 	  read_mag(&xmag,&ymag,&zmag);
-
 
 	  float x = xaxis/17500.0;
 	  float y = yaxis/17500.0;
 	  float z = zaxis/17500.0;
 
-
 	  float xm = xmag/17500.0;
 	  float ym = ymag/17500.0;
 	  float zm = zmag/17500.0;
 	  printf("MAG-> X: %f Y: %f Z: %f \n\r",xm,ym,zm);
-
-#ifdef DEBUG_OUT
-	  //StateToStr(debug_buffer);
-	  //printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
-#endif /* DEBUG_OUT */
+    //END ACCEL
+    
+    HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -316,7 +321,6 @@ void SystemClock_Config(void)
 }
 
 /**
-
   * @brief ADC1 Initialization Function
   * @param None
   * @retval None
@@ -353,6 +357,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
 
+/*
   * @brief I2C1 Initialization Function
   * @param None
   * @retval None
@@ -380,14 +385,13 @@ static void MX_I2C1_Init(void)
   {
     Error_Handler();
   }
-
+    
   /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
-
 
   /** Configure Regular Channel
   */
@@ -414,8 +418,6 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
-
-
 }
 
 /**
@@ -463,6 +465,57 @@ static void MX_LPUART1_UART_Init(void)
   /* USER CODE BEGIN LPUART1_Init 2 */
 
   /* USER CODE END LPUART1_Init 2 */
+
+}
+
+/**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 0;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 100;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 0;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 0;
+  if (HAL_TIM_Encoder_Init(&htim1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
 
 }
 
@@ -542,22 +595,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PE7 PE8 PE9 PE10
-                           PE11 PE12 PE13 */
-  GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10
-                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  /*Configure GPIO pin : PE10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PE14 PE15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF3_TIM1_COMP1;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PB10 */
@@ -681,6 +722,9 @@ static void MX_GPIO_Init(void)
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
