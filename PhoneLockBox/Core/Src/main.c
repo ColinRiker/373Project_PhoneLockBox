@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stdio.h"
+#include <string.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -80,103 +81,29 @@ void StateToStr(char* buffer);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* USER CODE BEGIN PV */
-//SPI_HandleTypeDef hspi1;
-/* USER CODE END PV */
-
-/* USER CODE BEGIN PFP */
-//static void MX_SPI1_Init(void);
-//void LCD_Init(void);
-//void LCD_SendCommand(uint8_t cmd);
-//void LCD_SendData(uint8_t data);
-//void LCD_FillScreen(uint16_t color);
-/* USER CODE END PFP */
-
-/* USER CODE BEGIN 0 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
 	        printf("EXTI Interrupt Triggered from KY-037 D0!\n");
 	}//from lab 4--> this is the interrupt that will be generated when any noise is heard
 }
-//void SPI_Send(uint8_t data) {
-//    HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
-//}
-//
-//void LCD_SendCommand(uint8_t cmd) {
-//    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET); // DC low for command
-//    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // CS low
-//    SPI_Send(cmd);
-//    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // CS high
-//}
-//
-//void LCD_SendData(uint8_t data) {
-//    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET); // DC high for data
-//    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // CS low
-//    SPI_Send(data);
-//    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // CS high
-//}
-//
-//void LCD_Init(void) {
-//    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // Reset display
-//    HAL_Delay(10);
-//    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
-//    HAL_Delay(120);
-//
-//    LCD_SendCommand(0x11); // Sleep out
-//    HAL_Delay(120);
-//
-//    LCD_SendCommand(0x3A); // Set pixel format to 16-bit
-//    LCD_SendData(0x55);
-//
-//    LCD_SendCommand(0x36); // Memory Access Control
-//    LCD_SendData(0x28);    // Adjust rotation
-//
-//    LCD_SendCommand(0x29); // Display ON
-//}
-//
-//void LCD_FillScreen(uint16_t color) {
-//    LCD_SendCommand(0x2A); // Column Address Set
-//    LCD_SendData(0x00);
-//    LCD_SendData(0x00);
-//    LCD_SendData(0x01);
-//    LCD_SendData(0x3F);
-//
-//    LCD_SendCommand(0x2B); // Page Address Set
-//    LCD_SendData(0x00);
-//    LCD_SendData(0x00);
-//    LCD_SendData(0x01);
-//    LCD_SendData(0xDF);
-//
-//    LCD_SendCommand(0x2C); // Memory Write
-//
-//    for (uint32_t i = 0; i < (480 * 320); i++) {
-//        LCD_SendData(color >> 8);
-//        LCD_SendData(color & 0xFF);
-//    }
-//}
 
-//static void MX_SPI1_Init(void) {
-//    hspi1.Instance = SPI1;
-//    hspi1.Init.Mode = SPI_MODE_MASTER;
-//    hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-//    hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-//    hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-//    hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-//    hspi1.Init.NSS = SPI_NSS_SOFT;
-//    hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
-//    hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-//    hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-//    hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-//    hspi1.Init.CRCPolynomial = 10;
-//    if (HAL_SPI_Init(&hspi1) != HAL_OK) {
-//        Error_Handler();
-//    }
-//}
+#ifdef DEBUG_OUT
+void StateToStr(char* buffer) {
+
+	switch (state.mode) {
+	case (LOCKED):
+		strncpy(buffer, "Locked", DEBUG_BUFFER_SIZE);
+		break;
+	case (UNLOCKED):
+		strncpy(buffer, "Unlocked", DEBUG_BUFFER_SIZE);
+		break;
+	default:
+		strncpy(buffer, "Error", DEBUG_BUFFER_SIZE);
+		break;
+	}
+}
+#endif
+
 /* USER CODE END 0 */
 
 /**
@@ -225,27 +152,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  uint32_t ADC_MIN = 4095;
-//	  uint32_t ADC_MAX = 0;
-//	  uint32_t ADC_SAMPLES = 100; // Number of samples to test signal range
-//
-//	  for (uint32_t i = 0; i < ADC_SAMPLES; i++) {
-//	      HAL_ADC_Start(&hadc1);
-//	      HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-//	      uint32_t adc_val = HAL_ADC_GetValue(&hadc1);
-//
-//	      if (adc_val < ADC_MIN) ADC_MIN = adc_val;
-//	      if (adc_val > ADC_MAX) ADC_MAX = adc_val;
-//
-//	      HAL_Delay(10);  // Small delay between samples
-//	  }
-//
-//	  float min_volt = (ADC_MIN / 4096.0) * 3.3;
-//	  float max_volt = (ADC_MAX / 4096.0) * 3.3;
-//
-//
-//	  printf("Mic ADC Range - MIN: %lu (%.2fV), MAX: %lu (%.2fV)\n", ADC_MIN, min_volt, ADC_MAX, max_volt);
-//	  HAL_Delay(500); // Delay before next round of sampling
+
 	HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
 	HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
 	ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
