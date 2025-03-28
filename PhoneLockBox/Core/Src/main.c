@@ -57,8 +57,11 @@ struct {
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+
 I2C_HandleTypeDef hi2c1;
+
 UART_HandleTypeDef hlpuart1;
+
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
@@ -173,8 +176,6 @@ void StateToStr(char* buffer) {
 		break;
 	}
 }
-#endif
-
 #endif /* DEBUG_OUT */
 /* USER CODE END 0 */
 
@@ -186,11 +187,12 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-/* DEBUG_OUT */
-
 	state.mode = UNLOCKED;
 	state.time = 0;
 
+#ifdef DEBUG_OUT
+	char debug_buffer[DEBUG_BUFFER_SIZE] = {0};
+#endif /* DEBUG_OUT */
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -214,6 +216,7 @@ int main(void)
   MX_LPUART1_UART_Init();
   MX_ADC1_Init();
   MX_TIM1_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Encoder_Start_IT(&htim1, TIM_CHANNEL_ALL);
   MX_I2C1_Init();
@@ -238,7 +241,6 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-
     /* USER CODE BEGIN 3 */
 	  StateToStr(debug_buffer);
 	  printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
@@ -254,7 +256,6 @@ int main(void)
     
     //ENCODER
 	  printf("Encoder CNT: %lu\n\r", TIM1->CNT);
-	  HAL_Delay(1000);
     //END ENCODER
     
     //ACCEL
@@ -268,6 +269,7 @@ int main(void)
 	  float xm = xmag/17500.0;
 	  float ym = ymag/17500.0;
 	  float zm = zmag/17500.0;
+	  printf("ACC-> X: %f Y: %f Z: %f \n\r",x,y,z);
 	  printf("MAG-> X: %f Y: %f Z: %f \n\r",xm,ym,zm);
     //END ACCEL
     
@@ -356,8 +358,29 @@ static void MX_ADC1_Init(void)
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-/*
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
   * @brief I2C1 Initialization Function
   * @param None
   * @retval None
@@ -385,29 +408,13 @@ static void MX_I2C1_Init(void)
   {
     Error_Handler();
   }
-    
+
   /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
-  sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.OffsetNumber = ADC_OFFSET_NONE;
-  sConfig.Offset = 0;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN ADC1_Init 2 */
-
-  /* USER CODE END ADC1_Init 2 */
 
   /** Configure Digital filter
   */
@@ -418,6 +425,7 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
@@ -722,9 +730,9 @@ static void MX_GPIO_Init(void)
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
