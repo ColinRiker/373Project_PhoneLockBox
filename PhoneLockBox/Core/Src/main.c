@@ -219,7 +219,6 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Encoder_Start_IT(&htim1, TIM_CHANNEL_ALL);
-  MX_I2C1_Init();
   acc_init();
   mag_init();
   
@@ -242,38 +241,38 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  StateToStr(debug_buffer);
-	  printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
+	StateToStr(debug_buffer);
+	printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
     
     //ADC
     HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
-	  HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
-	  ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
+	HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
+	ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
 
-	  float volt = ADC_VAL/(4096.0) * vref; // not sure if this is needed for mic input
-	  printf("ADC %d volt from mic %f\n", (int) ADC_VAL, volt );
-    //END ADC
+	float volt = ADC_VAL/(4096.0) * vref; // not sure if this is needed for mic input
+	//printf("ADC %d volt from mic %f\n\r", (int) ADC_VAL, volt );
+	//END ADC
     
     //ENCODER
-	  printf("Encoder CNT: %lu\n\r", TIM1->CNT);
+	//printf("Encoder CNT: %lu\n\r", TIM1->CNT);
     //END ENCODER
     
     //ACCEL
     read_acc(&xaxis,&yaxis,&zaxis);
-	  read_mag(&xmag,&ymag,&zmag);
+	read_mag(&xmag,&ymag,&zmag);
 
-	  float x = xaxis/17500.0;
-	  float y = yaxis/17500.0;
-	  float z = zaxis/17500.0;
+	float x = xaxis/17500.0;
+	float y = yaxis/17500.0;
+	float z = zaxis/17500.0;
 
-	  float xm = xmag/17500.0;
-	  float ym = ymag/17500.0;
-	  float zm = zmag/17500.0;
-	  printf("ACC-> X: %f Y: %f Z: %f \n\r",x,y,z);
-	  printf("MAG-> X: %f Y: %f Z: %f \n\r",xm,ym,zm);
+	float xm = xmag/17500.0;
+	float ym = ymag/17500.0;
+	float zm = zmag/17500.0;
+	printf("ACC-> X: %f Y: %f Z: %f \n\r",x,y,z);
+	printf("MAG-> X: %f Y: %f Z: %f \n\r",xm,ym,zm);
     //END ACCEL
     
-    HAL_Delay(1000);
+    HAL_Delay(5000);
   }
   /* USER CODE END 3 */
 }
