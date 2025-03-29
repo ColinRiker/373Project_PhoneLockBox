@@ -1,82 +1,80 @@
- 
 #include "lcd_driver.h"
 #include "stm32l4xx_hal.h"
+#include <stdio.h>
 
 extern SPI_HandleTypeDef hspi1;
 
-uint32_t LCD_ReadID(void) {
-    uint8_t cmd = 0x04;  // Read Display ID command
-    uint8_t rxData[4] = {0xFF, 0xFF, 0xFF, 0xFF};  // Initialize with non-zero values
-
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // CS LOW
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET); // DC LOW (Command Mode)
-
-    HAL_SPI_Transmit(&hspi1, &cmd, 1, HAL_MAX_DELAY);  // Send command
-    HAL_SPI_Receive(&hspi1, rxData, 4, HAL_MAX_DELAY);  // Read 4 bytes
-
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // CS HIGH
-
-    uint32_t displayID = (rxData[0] << 24) | (rxData[1] << 16) | (rxData[2] << 8) | rxData[3];
-
-    // Debug print SPI response
-    printf("SPI Response: %02X %02X %02X %02X\n", rxData[0], rxData[1], rxData[2], rxData[3]);
-
-    return displayID;
+void LCD_WriteCommand(uint8_t cmd) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET); // DC = 0 (command)
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET); // CS = 0
+    HAL_SPI_Transmit(&hspi1, &cmd, 1, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);   // CS = 1
+    HAL_Delay(1);
 }
 
-void SPI_Send(uint8_t data) {
-    //HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
+void LCD_WriteData(uint8_t data) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);   // DC = 1 (data)
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET); // CS = 0
+    HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);   // CS = 1
+    HAL_Delay(1);
 }
 
-void LCD_SendCommand(uint8_t cmd) {
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET); // DC low for command
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // CS low
-    SPI_Send(cmd);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // CS high
-}
+void LCD_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+    LCD_WriteCommand(0x2A);
+    LCD_WriteData(x0 >> 8); LCD_WriteData(x0 & 0xFF);
+    LCD_WriteData(x1 >> 8); LCD_WriteData(x1 & 0xFF);
 
-void LCD_SendData(uint8_t data) {
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET); // DC high for data
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // CS low
-    SPI_Send(data);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // CS high
+    LCD_WriteCommand(0x2B);
+    LCD_WriteData(y0 >> 8); LCD_WriteData(y0 & 0xFF);
+    LCD_WriteData(y1 >> 8); LCD_WriteData(y1 & 0xFF);
+
+    LCD_WriteCommand(0x2C);
+    HAL_Delay(2);
 }
 
 void LCD_Init(void) {
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET); // Reset display
-    HAL_Delay(10);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+    printf("LCD_Init starting...\n");
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // RESET = 0
+    HAL_Delay(120);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // RESET = 1
     HAL_Delay(120);
 
-    LCD_SendCommand(0x11); // Sleep out
+    LCD_WriteCommand(0x11); // Exit Sleep
     HAL_Delay(120);
 
-    LCD_SendCommand(0x3A); // Set pixel format to 16-bit
-    LCD_SendData(0x55);
+    LCD_WriteCommand(0x3A); // Interface Pixel Format
+    LCD_WriteData(0x55);    // 16-bit (RGB565)
 
-    LCD_SendCommand(0x36); // Memory Access Control
-    LCD_SendData(0x28);    // Adjust rotation
+    LCD_WriteCommand(0x36); // Memory Access Control
+    LCD_WriteData(0x48);    // MX, BGR mode
 
-    LCD_SendCommand(0x29); // Display ON
+    LCD_WriteCommand(0x29); // Display ON
+    HAL_Delay(20);
+
+    printf("LCD_Init complete!\n");
 }
 
 void LCD_FillScreen(uint16_t color) {
-    LCD_SendCommand(0x2A); // Column Address Set
-    LCD_SendData(0x00);
-    LCD_SendData(0x00);
-    LCD_SendData(0x01);
-    LCD_SendData(0x3F);
+    LCD_SetAddressWindow(0, 0, 319, 479);
 
-    LCD_SendCommand(0x2B); // Page Address Set
-    LCD_SendData(0x00);
-    LCD_SendData(0x00);
-    LCD_SendData(0x01);
-    LCD_SendData(0xDF);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET); // DC = Data
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET); // CS LOW
 
-    LCD_SendCommand(0x2C); // Memory Write
-
-    for (uint32_t i = 0; i < (480 * 320); i++) {
-        LCD_SendData(color >> 8);
-        LCD_SendData(color & 0xFF);
+    uint8_t high = color >> 8;
+    uint8_t low = color & 0xFF;
+    for (uint32_t i = 0; i < 320UL * 480UL; i++) {
+        HAL_SPI_Transmit(&hspi1, &high, 1, HAL_MAX_DELAY);
+        HAL_SPI_Transmit(&hspi1, &low, 1, HAL_MAX_DELAY);
     }
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); // CS HIGH
 }
+
+void LCD_DrawPixel(uint16_t x, uint16_t y, uint16_t color) {
+    LCD_WriteCommand(0x2C); // memory write
+    uint8_t hi = color >> 8, lo = color & 0xFF;
+    HAL_SPI_Transmit(&hspi1, &hi, 1, HAL_MAX_DELAY);
+    HAL_SPI_Transmit(&hspi1, &lo, 1, HAL_MAX_DELAY);
+}
+

@@ -18,7 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "lcd_driver.h"
+#include "display_logic.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
@@ -71,6 +72,7 @@ static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
+
 
 #ifdef DEBUG_OUT
 void StateToStr(char* buffer);
@@ -232,6 +234,34 @@ int main(void)
   MX_LPUART1_UART_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+  LCD_Init();
+  Display_ShowStartupPrompt();
+  LCD_SetAddressWindow(0, 0, 20, 20); // tiny square in top-left
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);   // DC = data
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET); // CS LOW
+  uint8_t hi = 0xF8, lo = 0x00;
+  HAL_SPI_Transmit(&hspi1, &hi, 1, HAL_MAX_DELAY);
+  HAL_SPI_Transmit(&hspi1, &lo, 1, HAL_MAX_DELAY);
+
+  // dummy pixel first
+  if (HAL_SPI_Transmit(&hspi1, &hi, 1, HAL_MAX_DELAY) != HAL_OK)
+      printf("SPI TX fail: dummy hi byte\n");
+  if (HAL_SPI_Transmit(&hspi1, &lo, 1, HAL_MAX_DELAY) != HAL_OK)
+      printf("SPI TX fail: dummy lo byte\n");
+
+  for (int i = 0; i < 400; i++) {
+      if (i % 100 == 0) {
+          printf("Sending pixel %d\n", i);
+      }
+
+      uint8_t red888[3] = {0xFF, 0x00, 0x00}; // R, G, B
+      HAL_SPI_Transmit(&hspi1, red888, 3, HAL_MAX_DELAY);
+  }
+
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); // CS HIGH
+  printf("Red box sent!\n");
 
   /* USER CODE END 2 */
 
@@ -244,9 +274,10 @@ int main(void)
     /* USER CODE BEGIN 3 */
 #ifdef DEBUG_OUT
 	  StateToStr(debug_buffer);
-	  printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
-	  uint32_t id = LCD_ReadID();
-	  printf("Display ID: 0x%08X\n", id);
+	  //printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
+	  //uint32_t id = LCD_ReadID();
+	  //printf("Display ID: 0x%08lX\n", (unsigned long)id);
+
 #endif /* DEBUG_OUT */
   }
   /* USER CODE END 3 */
@@ -367,7 +398,8 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  //CHANGE THE LINE BELOW EVERYTIME
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
