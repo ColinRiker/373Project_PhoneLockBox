@@ -179,10 +179,12 @@ int main(void)
 
 	char acc_str[100];
 	char mag_str[100];
+	char enc_str[100];
 
 
 	sprintf(acc_str,"X: %f , Y: %f , Z: %f",x_acc/coef,y_acc/coef,z_acc/coef);
 	sprintf(mag_str,"X: %f , Y: %f , Z: %f",x_mag/coef,y_mag/coef,z_mag/coef);
+	sprintf(enc_str,"%d",TIM1->CNT);
 
 	ILI9341_Draw_Text("Acceleration:",FONT4,10,10,BLACK,WHITE);
 	ILI9341_Draw_Text(acc_str,FONT2,10,40,BLACK,WHITE);
@@ -190,6 +192,8 @@ int main(void)
 	ILI9341_Draw_Text("Magnet:",FONT4,10,70,BLACK,WHITE);
 	ILI9341_Draw_Text(mag_str,FONT2,10,100,BLACK,WHITE);
 
+	ILI9341_Draw_Text("Encoder:",FONT4,10,130,BLACK,WHITE);
+	ILI9341_Draw_Text(enc_str,FONT4,10,160,BLACK,WHITE);
 
 	printf("ACC-> X: %f Y: %f Z: %f \n\r",x_acc/coef,y_acc/coef,z_acc/coef);
 	printf("MAG-> X: %f Y: %f Z: %f \n\r",x_mag/coef,y_mag/coef,z_mag/coef);
