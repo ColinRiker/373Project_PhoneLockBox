@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
+#include "stm32l4xx_hal_tim.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,9 +60,13 @@ ADC_HandleTypeDef hadc1;
 
 UART_HandleTypeDef hlpuart1;
 
+TIM_HandleTypeDef htim2;
+
 /* USER CODE BEGIN PV */
 	BoxState state;
-
+	volatile uint32_t interrupt_count = 0;
+	volatile uint32_t last_interrupt_time = 0;
+	volatile uint32_t time_between_interrupts = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,6 +74,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 #ifdef DEBUG_OUT
@@ -99,10 +105,41 @@ void StateToStr(char* buffer);
 
 /* USER CODE BEGIN 0 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
-	        printf("EXTI Interrupt Triggered from KY-037 D0!\n");
-	}//from lab 4--> this is the interrupt that will be generated when any noise is heard
+    if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
+        uint32_t now = __HAL_TIM_GET_COUNTER(&htim2);
+        uint32_t delta;
+
+        if (now >= last_interrupt_time)
+            delta = now - last_interrupt_time;
+        else
+            delta = (2000000 - last_interrupt_time) + now;  // Handle timer wrap
+
+        last_interrupt_time = now;
+        interrupt_count++;
+
+        printf("Interrupt #%lu at %lu us, Δt = %lu us\n",
+               interrupt_count, now, delta);
+    }
 }
+
+//void MX_TIM2_Init(void)
+//{
+//  __HAL_RCC_TIM2_CLK_ENABLE();
+//
+//  htim2.Instance = TIM2;
+//  htim2.Init.Prescaler = (SystemCoreClock / 1000000) - 1; // 1 µs per tick
+//  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+//  htim2.Init.Period = 2000000 - 1;  // 2 second overflow
+//  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+//  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+//
+//  if (HAL_TIM_Base_Init(&htim2) != HAL_OK) {
+//    Error_Handler();
+//  }
+//
+//  HAL_TIM_Base_Start(&htim2);
+//}
+
 //void SPI_Send(uint8_t data) {
 //    HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
 //}
@@ -186,6 +223,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 int main(void)
 {
 
+
   /* USER CODE BEGIN 1 */
 #ifdef DEBUG_OUT
 	char debug_buffer[DEBUG_BUFFER_SIZE] = {0};
@@ -216,7 +254,10 @@ int main(void)
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
   MX_ADC1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start(&htim2);
+
   uint32_t ADC_VAL = 0; //added for printing mic values
   float vref = 3.3; // voltage reference for mic
   /* USER CODE END 2 */
@@ -416,6 +457,51 @@ static void MX_LPUART1_UART_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 79;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 2000000-1;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -461,14 +547,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF13_SAI1;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PA4 PA5 PA6 PA7 */
   GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -508,14 +586,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF3_TIM1_COMP1;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PB10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_10;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB12 PB13 PB15 */
   GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_15;
