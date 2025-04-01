@@ -67,6 +67,8 @@ TIM_HandleTypeDef htim2;
 	volatile uint32_t interrupt_count = 0;
 	volatile uint32_t last_interrupt_time = 0;
 	volatile uint32_t time_between_interrupts = 0;
+	volatile uint32_t matrix_index = 0;
+	volatile uint32_t matrix[100][2];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -104,10 +106,28 @@ void StateToStr(char* buffer);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+//void COMPARE_MATRICIES(uint32_t matrix_read){
+//	uint32_t ringtone[100][2] = {
+//			{100, 200},
+//			{300, 400},
+//			{500, 600}
+//	};
+//
+//}
+
+
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
     if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
         uint32_t now = __HAL_TIM_GET_COUNTER(&htim2);
         uint32_t delta;
+        uint32_t ADC_vals;
+
+//        HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
+//        HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
+        ADC_vals = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
+        uint32_t vreference = 3.3;
+        float volts = ADC_vals/(4096.0) * vreference;
 
         if (now >= last_interrupt_time)
             delta = now - last_interrupt_time;
@@ -116,6 +136,25 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
         last_interrupt_time = now;
         interrupt_count++;
+
+        if(interrupt_count == 100){
+        	printf("Interrupt count met!\n");
+
+        	for (int i = 0; i < 100; i++) {
+        		for (int j = 0; j < 4; j++) {
+        			printf("%d\t", matrix[i][j]);  // Use \t for better spacing
+        	    }
+        	    printf("\n");
+        	}
+
+        	//trigger another interrupt?
+        } else if (matrix_index < 100) {
+            matrix[matrix_index][0] = interrupt_count;
+            matrix[matrix_index][1] = delta;
+            matrix[matrix_index][2]= ADC_vals;
+            matrix[matrix_index][3] = volts;
+            matrix_index++;
+        }
 
         printf("Interrupt #%lu at %lu us, Δt = %lu us\n",
                interrupt_count, now, delta);
