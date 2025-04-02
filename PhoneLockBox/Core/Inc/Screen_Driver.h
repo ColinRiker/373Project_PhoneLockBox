@@ -155,4 +155,6 @@ void ILI9341_Draw_Char(char ch, const uint8_t font[], uint16_t X, uint16_t Y, ui
 void ILI9341_Draw_Text(const char* str, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor);
 void ILI9341_Draw_Image(const char* Image_Array, uint8_t Orientation);
 
+void screenResolve(void);
+
 #endif

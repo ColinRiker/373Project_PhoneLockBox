@@ -91,6 +91,7 @@ static inline void StateToStr(char* buffer, BoxMode mode) {
             strncpy(buffer, "Error", DEBUG_BUFFER_SIZE);
             break;
     }
+
 }
 
 #endif /* INC_SHARED_H_ */

@@ -1,5 +1,6 @@
 
 #include "Screen_Driver.h"
+#include "shared.h"
 #include "stm32l4xx_hal.h"
 #define HSPI_INSTANCE &hspi1
 
@@ -8,7 +9,55 @@ extern SPI_HandleTypeDef hspi1;
 int LCD_HEIGHT = LCD_HEIGHT_1;
 int LCD_WIDTH = LCD_WIDTH_1;
 
+void screenResolve(void) {
+	switch (state.mode) {
+		case UNLOCKED_EMPTY_ASLEEP:
 
+			break;
+		case UNLOCKED_ASLEEP_TO_AWAKE:
+
+			break;
+		case UNLOCKED_EMPTY_AWAKE:
+
+			break;
+		case UNLOCKED_FULL_AWAKE_FUNC_A:
+
+			break;
+		case UNLOCKED_FULL_AWAKE_FUNC_B:
+
+			break;
+		case UNLOCKED_FULL_ASLEEP:
+
+			break;
+		case UNLOCKED_TO_LOCKED_AWAKE:
+
+			break;
+		case LOCKED_FULL_AWAKE:
+
+			break;
+		case LOCKED_FULL_ASLEEP:
+
+			break;
+		case LOCKED_MONITOR_AWAKE:
+
+			break;
+		case LOCKED_MONITOR_ASLEEP:
+
+			break;
+		case LOCKED_FULL_NOTIFICATION_FUNC_A:
+
+			break;
+		case LOCKED_FULL_NOTIFICATION_FUNC_B:
+
+			break;
+		case EMERGENCY_OPEN:
+
+			break;
+		default:
+
+		break;
+		}
+}
 void ILI9341_SPI_Send(unsigned char SPI_Data)
 {
 	HAL_SPI_Transmit(HSPI_INSTANCE, &SPI_Data, 1, 1);
