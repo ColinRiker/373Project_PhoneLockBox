@@ -19,7 +19,7 @@ void rotencInit(void) {
 
 
 
-void rotencResolve(void) {
+BoxMode rotencResolve(void) {
 	switch (state.mode) {
 		case UNLOCKED_EMPTY_ASLEEP:
 

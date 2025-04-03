@@ -34,11 +34,11 @@ extern I2C_HandleTypeDef hi2c1;
 
 void accInit(void);
 void accRead(int16_t * x_axis,int16_t * y_axis,int16_t * z_axis);
-void accResolve();
+BoxMode accResolve();
 void accCheck(void);
 
 void magInit(void);
 void magRead(int16_t * x_mag,int16_t * y_mag,int16_t * z_mag);
-void magResolve(void);
+BoxMode magResolve(void);
 
 #endif /* INC_ACCELEROMETER_H_ */

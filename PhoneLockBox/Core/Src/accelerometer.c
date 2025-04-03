@@ -42,7 +42,55 @@ void accRead(int16_t * x_axis,int16_t * y_axis,int16_t * z_axis){
 }
 
 
+BoxMode accResolve(void) {
+	switch (state.mode) {
+			case UNLOCKED_EMPTY_ASLEEP:
 
+				break;
+			case UNLOCKED_ASLEEP_TO_AWAKE:
+
+				break;
+			case UNLOCKED_EMPTY_AWAKE:
+
+				break;
+			case UNLOCKED_FULL_AWAKE_FUNC_A:
+
+				break;
+			case UNLOCKED_FULL_AWAKE_FUNC_B:
+
+				break;
+			case UNLOCKED_FULL_ASLEEP:
+
+				break;
+			case UNLOCKED_TO_LOCKED_AWAKE:
+
+				break;
+			case LOCKED_FULL_AWAKE:
+
+				break;
+			case LOCKED_FULL_ASLEEP:
+
+				break;
+			case LOCKED_MONITOR_AWAKE:
+
+				break;
+			case LOCKED_MONITOR_ASLEEP:
+
+				break;
+			case LOCKED_FULL_NOTIFICATION_FUNC_A:
+
+				break;
+			case LOCKED_FULL_NOTIFICATION_FUNC_B:
+
+				break;
+			case EMERGENCY_OPEN:
+
+				break;
+			default:
+
+			break;
+			}
+}
 
 void magInit(){
 	//bin is setting to 3.0 hz

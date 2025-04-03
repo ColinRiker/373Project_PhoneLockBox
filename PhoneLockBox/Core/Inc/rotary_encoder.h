@@ -19,6 +19,6 @@ extern TIM_HandleTypeDef htim1;
 
 void rotencInit(void);
 uint16_t rotencRead(void);
-void rotencResolve(void);
+BoxMode rotencResolve(void);
 
 #endif /* INC_ROTARY_ENCODER_H_ */

@@ -38,60 +38,86 @@ BoxMode runStateMachine(void) {
             break;
 
         case UNLOCKED_ASLEEP_TO_AWAKE:
-            // show hello msg / animate screen on
-            // after that, move to awake
-            next = UNLOCKED_EMPTY_AWAKE;
+            // we only move to one other state form this state
+        	//note that timer resolve is declared but has no current implementation
+        	if(timerResolve()==UNLOCKED_EMPTY_AWAKE) {
+        		next = UNLOCKED_EMPTY_AWAKE;
+        	}
             break;
 
         case UNLOCKED_EMPTY_AWAKE:
             // if phone is placed in box (NFC detect), switch to full awake mode
-            // just placeholder logic for now
-            if (/* phonePresent() */ 0) {
-                next = UNLOCKED_FULL_AWAKE_FUNC_A;
-            }
+        	//THIS TAKES PRIORITY OVER GOING BACK TO SLEEP
+				if (NFCResolve()==UNLOCKED_FULL_AWAKE_FUNC_A) {
+					next = UNLOCKED_FULL_AWAKE_FUNC_A;
+				}
+				//if we cannot move to full awake, we move back to sleep
+				else if((rotencResolve()==UNLOCKED_EMPTY_ASLEEP) && (timerResolve()==UNLOCKED_EMPTY_ASLEEP)) {
+					next = UNLOCKED_EMPTY_ASLEEP;
+				}
 
-            // if user does nothing for a while, go back to sleep
-            // TODO: add timer / timeout
+
             break;
 
         case UNLOCKED_FULL_AWAKE_FUNC_A:
-            // user can turn dial to set time
-            // pushbutton long press to lock
-            if (encoder_val > 0) {
-                state.time = encoder_val;
-            }
-
-            if (/* isButtonHeldLong() */ 0) {
-                next = UNLOCKED_TO_LOCKED_AWAKE;
+            // PRIORITIZE MOVING TO AWAKE FUNC B
+            if (rotencResolve()==UNLOCKED_FULL_AWAKE_FUNC_B) {
+            	next=UNLOCKED_FULL_AWAKE_FUNC_B;
+            } //if we can't move to taht, we move back to sleep
+            	else if(timerResolve()==UNLOCKED_FULL_ASLEEP) {
+            	next=UNLOCKED_FULL_ASLEEP;
             }
             break;
-
+        case UNLOCKED_FULL_AWAKE_FUNC_B:
+                   // PRIORITIZE MOVING TO UNLOCKED_TO_LOCKED_AWAKE
+                   if (rotencResolve()==UNLOCKED_TO_LOCKED_AWAKE && accResolve()==UNLOCKED_TO_LOCKED_AWAKE) {
+                	   next=UNLOCKED_TO_LOCKED_AWAKE;
+                   } //if we can't move to UNLOCKED_TO_LOCKED_AWAKE, we move to func A
+                   	else if(rotencResolve()==UNLOCKED_FULL_AWAKE_FUNC_A) {
+                   		next=UNLOCKED_FULL_ASLEEP;
+                   }  //next, move back to unlocked and empty but awake
+                   	else if(NFCResolve()==UNLOCKED_EMPTY_AWAKE) {
+                	   next=UNLOCKED_EMPTY_AWAKE;
+                   } //finally, we last move back to sleep
+                   	else if(timerResolve()==UNLOCKED_FULL_ASLEEP) {
+                	  next=UNLOCKED_FULL_ASLEEP;
+                   }
+                   break;
+        case UNLOCKED_FULL_ASLEEP:
+                   // PRIORITIZE MOVING BACK TO EMPTY IF PHONE IS EVER TAKEN OUT
+                   if (NFCResolve()==UNLOCKED_EMPTY_AWAKE) {
+                	   	next=UNLOCKED_EMPTY_AWAKE;
+                   }//if not, wake back up if possible
+                   	else if(rotencResolve()==UNLOCKED_FULL_AWAKE_FUNC_A && accResolve()==UNLOCKED_FULL_AWAKE_FUNC_A) {
+                   		next=UNLOCKED_FULL_AWAKE_FUNC_A;
+                   }
+                   break;
         case UNLOCKED_TO_LOCKED_AWAKE:
-            // show setting time animation
-            // lock solenoid here
-            // transition to locked full awake
-            next = LOCKED_FULL_AWAKE;
+
             break;
 
         case LOCKED_FULL_AWAKE:
-            // this is the main countdown state
-            if (state.time > 0) {
-                state.time--;
-            } else {
-                // unlock and go back to unlocked state
-                next = UNLOCKED_EMPTY_AWAKE;
-            }
 
-            // optional: monitor for emergency unlock here
             break;
 
-        case EMERGENCY_OPEN:
-            // user held emergency button, override lock
-            // unlock solenoid + return to awake state
-            next = UNLOCKED_EMPTY_AWAKE;
-            break;
+        case LOCKED_FULL_NOTIFICATION_FUNC_A:
 
-        default:
+            break;
+        case LOCKED_FULL_NOTIFICATION_FUNC_B:
+
+                    break;
+        case LOCKED_FULL_ASLEEP:
+
+                    break;
+        case LOCKED_MONITOR_AWAKE:
+
+                    break;
+        case LOCKED_MONITOR_ASLEEP:
+
+                    break;
+
+
+        default: //should we have a default?? what would that be??
             // fallback case
             break;
     }
