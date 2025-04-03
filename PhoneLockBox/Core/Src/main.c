@@ -64,11 +64,24 @@ TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 	BoxState state;
+
+	#define MAX_LOG_ENTRIES 20
+	volatile char log_buffer[MAX_LOG_ENTRIES][64];
+	volatile uint32_t log_index = 0;
+	volatile uint8_t print_flag = 0;
 	volatile uint32_t interrupt_count = 0;
+
 	volatile uint32_t last_interrupt_time = 0;
 	volatile uint32_t time_between_interrupts = 0;
 	volatile uint32_t matrix_index = 0;
-	volatile uint32_t matrix[100][2];
+	volatile uint32_t matrix[20][4];
+    volatile uint32_t mic_triggered = 0;
+    volatile uint32_t print_matrix_flag = 0;
+    #define MAX_ENTRIES 20
+
+
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -115,51 +128,12 @@ void StateToStr(char* buffer);
 //
 //}
 
-
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
     if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
-        uint32_t now = __HAL_TIM_GET_COUNTER(&htim2);
-        uint32_t delta;
-        uint32_t ADC_vals;
-
-//        HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
-//        HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
-        ADC_vals = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
-        uint32_t vreference = 3.3;
-        float volts = ADC_vals/(4096.0) * vreference;
-
-        if (now >= last_interrupt_time)
-            delta = now - last_interrupt_time;
-        else
-            delta = (2000000 - last_interrupt_time) + now;  // Handle timer wrap
-
-        last_interrupt_time = now;
-        interrupt_count++;
-
-        if(interrupt_count == 100){
-        	printf("Interrupt count met!\n");
-
-        	for (int i = 0; i < 100; i++) {
-        		for (int j = 0; j < 4; j++) {
-        			printf("%d\t", matrix[i][j]);  // Use \t for better spacing
-        	    }
-        	    printf("\n");
-        	}
-
-        	//trigger another interrupt?
-        } else if (matrix_index < 100) {
-            matrix[matrix_index][0] = interrupt_count;
-            matrix[matrix_index][1] = delta;
-            matrix[matrix_index][2]= ADC_vals;
-            matrix[matrix_index][3] = volts;
-            matrix_index++;
-        }
-
-        printf("Interrupt #%lu at %lu us, Δt = %lu us\n",
-               interrupt_count, now, delta);
+        mic_triggered = 1;
     }
 }
+
 
 //void MX_TIM2_Init(void)
 //{
@@ -262,7 +236,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 int main(void)
 {
 
-
   /* USER CODE BEGIN 1 */
 #ifdef DEBUG_OUT
 	char debug_buffer[DEBUG_BUFFER_SIZE] = {0};
@@ -297,44 +270,131 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&htim2);
 
-  uint32_t ADC_VAL = 0; //added for printing mic values
   float vref = 3.3; // voltage reference for mic
-  /* USER CODE END 2 */
 
+  uint32_t ADC_MIN = 1970;
+  uint32_t ADC_MAX = 0;
+  uint32_t ADC_SAMPLES = 20;
+  static int sample_count = 0;
+  static int running_sum = 0;
+  static int last_val;
+  uint32_t last_interrupt_time=0;
+  static int interrupt_count = 0;
+  uint32_t average = 0;
+
+//HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
+//HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
+    //retrieve value --> pulled from lab 7
+    // Handle timer wrap
+/* USER CODE END 2 */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-//	  uint32_t ADC_MIN = 4095;
-//	  uint32_t ADC_MAX = 0;
-//	  uint32_t ADC_SAMPLES = 100; // Number of samples to test signal range
-//
-//	  for (uint32_t i = 0; i < ADC_SAMPLES; i++) {
-//	      HAL_ADC_Start(&hadc1);
-//	      HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-//	      uint32_t adc_val = HAL_ADC_GetValue(&hadc1);
-//
-//	      if (adc_val < ADC_MIN) ADC_MIN = adc_val;
-//	      if (adc_val > ADC_MAX) ADC_MAX = adc_val;
-//
-//	      HAL_Delay(10);  // Small delay between samples
-//	  }
-//
-//	  float min_volt = (ADC_MIN / 4096.0) * 3.3;
-//	  float max_volt = (ADC_MAX / 4096.0) * 3.3;
-//
-//
-//	  printf("Mic ADC Range - MIN: %lu (%.2fV), MAX: %lu (%.2fV)\n", ADC_MIN, min_volt, ADC_MAX, max_volt);
-//	  HAL_Delay(500); // Delay before next round of sampling
-	HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
-	HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
-	ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
 
-	float volt = ADC_VAL/(4096.0) * vref; // not sure if this is needed for mic input
-	printf("ADC %d volt from mic %f\n", (int) ADC_VAL, volt );
-	//i need to set this up for my computer
-	HAL_Delay(100);
-    /* USER CODE END WHILE */
+  while (1){
+    // 1. Sample ADC periodically (optional, good for baseline analysis)
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    uint32_t sample = HAL_ADC_GetValue(&hadc1);
+	float volts = sample/(4096.0) * vref;
+
+    if(mic_triggered == 1){
+		mic_triggered = 0;
+		uint32_t now = __HAL_TIM_GET_COUNTER(&htim2);
+		uint32_t delta;
+
+		if(now >= last_interrupt_time){
+			delta = now - last_interrupt_time;
+		}
+		else{
+			delta = (2000000 - last_interrupt_time) + now;
+		}
+		last_interrupt_time = now;
+		interrupt_count++;
+
+            if (matrix_index < MAX_ENTRIES) {
+                matrix[matrix_index][0] = interrupt_count;
+                matrix[matrix_index][1] = delta;
+                matrix[matrix_index][2] = sample;
+                matrix[matrix_index][3] = (uint32_t)(volts * 1000);
+                matrix_index = (matrix_index + 1) % MAX_ENTRIES;;
+            }
+
+           printf("Interrupt #%lu triggered at %lu µs (%.2f V)\n", interrupt_count, now, volts);
+           	  if(interrupt_count == 20){
+           		print_matrix_flag = 1;
+           	  }
+//            if (interrupt_count >= MAX_ENTRIES) {
+//            	print_matrix_flag = 1;
+//
+//                printf("\n--- Final Matrix ---\n");
+//                for (uint32_t i = 0; i < matrix_index; i++) {
+//                    printf("Int %3lu | Δt: %6lu us | ADC: %4lu | Volt: %.2f V\n",
+//                           matrix[i][0], matrix[i][1], matrix[i][2], matrix[i][3] / 1000.0f);
+//                }
+//                interrupt_count = 0;
+//                matrix_index = 0;
+//            }
+        }
+    sample_count++;
+    running_sum = running_sum+sample;
+
+    if(sample_count == ADC_SAMPLES){
+    	average = running_sum/sample_count;
+    	sample_count = 0;
+    	running_sum = 0;
+    	if(average>ADC_MIN){
+    	    printf("Live ADC Sample: %lu (%.2f V)\n", average, volts);
+    	    HAL_Delay(1);
+    	}
+    }
+    // Optional: print basic live ADC data
+      // Throttle so it doesn't spam UART
+
+    // 2. If interrupt triggered enough times, print matrix
+    if (print_matrix_flag) {
+        print_matrix_flag = 0;
+
+//        printf("\n=== Interrupts Triggered: %lu ===\n", interrupt_count);
+//        for (int i = 0; i < matrix_index; i++) {
+//            printf("Event %3lu: Δt = %6lu us | ADC = %4lu | %.2f V\n",
+//                   matrix[i][0],
+//                   matrix[i][1],
+//                   matrix[i][2],
+//                   matrix[i][3] / 1000.0f);
+//
+//            HAL_Delay(2);  // Prevent UART overload
+//        }
+//        printf("=== End of Matrix ===\n\n");
+
+        uint32_t sum_deltas = 0;
+       	uint32_t sum_volts = 0;
+        printf("=== Last %d Interrupts (ring buffer) ===\n", MAX_ENTRIES);
+        for (int i = 0; i < MAX_ENTRIES; i++) {
+            uint32_t idx = (matrix_index + i) % MAX_ENTRIES;
+            printf("Event %3lu: Δt = %6lu us | ADC = %4lu | %.2f V\n",
+                   matrix[idx][0], matrix[idx][1], matrix[idx][2], matrix[idx][3] / 1000.0f);
+
+            //sum of time inbetween interrupts
+            //sum of overall voltage
+            //compare to set values
+            //if voltage for time matches ringtone, trigger interrupt on solenoid
+            HAL_Delay(2);
+        }
+
+        // Optional: reset for next round
+        for (int r = 0; r < MAX_ENTRIES; r++) {
+        	sum_deltas += matrix[r][2];
+        	sum_volts += matrix[r][4];
+        }
+        printf("time gap total = %lu and voltage total = %lu/n", sum_deltas, sum_volts);
+
+        matrix_index = 0;
+        interrupt_count = 0;
+        sum_deltas = 0;
+        sum_volts = 0;
+    }
+
+    // 3. (Optional) Handle other flags, UI, commands, etc.
 
     /* USER CODE BEGIN 3 */
 #ifdef DEBUG_OUT
