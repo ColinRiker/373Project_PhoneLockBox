@@ -23,7 +23,9 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include <stdio.h>
 #include "Screen_Driver.h"
+#include "nfc.h"
 #include "accelerometer.h"
 #include "rotary_encoder.h"
 #include "shared.h"
@@ -56,6 +58,7 @@ TIM_HandleTypeDef htim1;
 /* USER CODE BEGIN PV */
 BoxState state;
 BoxState next_state;
+PN532 pn532;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -124,11 +127,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	ILI9341_Init();//initial driver setup to drive ili9341
 	ILI9341_Fill_Screen(WHITE);
-	//	ILI9341_Draw_Text("This is a text test",FONT4,10,10,BLUE,RED);
 
   accInit();
   magInit();
   rotencInit();
+  nfcInit();
   
   uint32_t ADC_VAL = 0; //added for printing mic values
   float vref = 3.3; // voltage reference for mic
@@ -163,28 +166,29 @@ int main(void)
 	ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
 
 	float volt = ADC_VAL/(4096.0) * vref; // not sure if this is needed for mic input
-	printf("ADC %d volt from mic %f\n\r", (int) ADC_VAL, volt );
+	//printf("ADC %d volt from mic %f\n\r", (int) ADC_VAL, volt );
 	//END ADC
     
     //ENCODER
-	printf("Encoder CNT: %lu\n\r", TIM1->CNT);
+	//printf("Encoder CNT: %lu\n\r", TIM1->CNT);
     //END ENCODER
     
     //ACCEL
 	accRead(&x_acc,&y_acc,&z_acc);
-
 	magRead(&x_mag,&y_mag,&z_mag);
-
-
 
 	char acc_str[100];
 	char mag_str[100];
 	char enc_str[100];
+	char nfc_str[100];
+
+	char has_nfc_target =  nfcHasTarget() ? 'T' : 'F';
 
 
 	sprintf(acc_str,"X: %f , Y: %f , Z: %f",x_acc/coef,y_acc/coef,z_acc/coef);
 	sprintf(mag_str,"X: %f , Y: %f , Z: %f",x_mag/coef,y_mag/coef,z_mag/coef);
-	sprintf(enc_str,"%d",TIM1->CNT);
+	sprintf(enc_str,"%lu",TIM1->CNT);
+	sprintf(nfc_str,"Tag Present: %c", has_nfc_target);
 
 	ILI9341_Draw_Text("Acceleration:",FONT4,10,10,BLACK,WHITE);
 	ILI9341_Draw_Text(acc_str,FONT2,10,40,BLACK,WHITE);
@@ -195,8 +199,11 @@ int main(void)
 	ILI9341_Draw_Text("Encoder:",FONT4,10,130,BLACK,WHITE);
 	ILI9341_Draw_Text(enc_str,FONT4,10,160,BLACK,WHITE);
 
-	printf("ACC-> X: %f Y: %f Z: %f \n\r",x_acc/coef,y_acc/coef,z_acc/coef);
-	printf("MAG-> X: %f Y: %f Z: %f \n\r",x_mag/coef,y_mag/coef,z_mag/coef);
+	ILI9341_Draw_Text("NFC:",FONT4,10,190,BLACK,WHITE);
+	ILI9341_Draw_Text(nfc_str,FONT2,10,210,BLACK,WHITE);
+
+	//printf("ACC-> X: %f Y: %f Z: %f \n\r",x_acc/coef,y_acc/coef,z_acc/coef);
+	//printf("MAG-> X: %f Y: %f Z: %f \n\r",x_mag/coef,y_mag/coef,z_mag/coef);
 
 
 
@@ -526,7 +533,8 @@ static void MX_GPIO_Init(void)
   HAL_PWREx_EnableVddIO2();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, PN532_RST_Pin|PN532_REQ_Pin|GPIO_PIN_3|GPIO_PIN_4
+                          |GPIO_PIN_5, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PE2 PE3 */
   GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
@@ -560,12 +568,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  /*Configure GPIO pins : PN532_RST_Pin PN532_REQ_Pin PB3 PB4
+                           PB5 */
+  GPIO_InitStruct.Pin = PN532_RST_Pin|PN532_REQ_Pin|GPIO_PIN_3|GPIO_PIN_4
+                          |GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB2 PB6 */
@@ -681,13 +690,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PB3 PB4 PB5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PE0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
