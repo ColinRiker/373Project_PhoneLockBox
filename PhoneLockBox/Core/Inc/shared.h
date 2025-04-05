@@ -44,53 +44,53 @@ extern BoxState next_state;
 
 static inline void StateToStr(char* buffer, BoxMode mode) {
 
-    switch (mode) {
-        case UNLOCKED_EMPTY_ASLEEP:
-            strncpy(buffer, "Unlocked Empty Asleep", DEBUG_BUFFER_SIZE);
-            break;
-        case UNLOCKED_ASLEEP_TO_AWAKE:
-            strncpy(buffer, "Unlocked Asleep to Awake", DEBUG_BUFFER_SIZE);
-            break;
-        case UNLOCKED_EMPTY_AWAKE:
-            strncpy(buffer, "Unlocked Empty Awake", DEBUG_BUFFER_SIZE);
-            break;
-        case UNLOCKED_FULL_AWAKE_FUNC_A:
-            strncpy(buffer, "Unlocked Full Awake Function A", DEBUG_BUFFER_SIZE);
-            break;
-        case UNLOCKED_FULL_AWAKE_FUNC_B:
-            strncpy(buffer, "Unlocked Full Awake Function B", DEBUG_BUFFER_SIZE);
-            break;
-        case UNLOCKED_FULL_ASLEEP:
-            strncpy(buffer, "Unlocked Full Asleep", DEBUG_BUFFER_SIZE);
-            break;
-        case UNLOCKED_TO_LOCKED_AWAKE:
-            strncpy(buffer, "Unlocked to Locked Awake", DEBUG_BUFFER_SIZE);
-            break;
-        case LOCKED_FULL_AWAKE:
-            strncpy(buffer, "Locked Full Awake", DEBUG_BUFFER_SIZE);
-            break;
-        case LOCKED_FULL_ASLEEP:
-            strncpy(buffer, "Locked Full Asleep", DEBUG_BUFFER_SIZE);
-            break;
-        case LOCKED_MONITOR_AWAKE:
-            strncpy(buffer, "Locked Monitor Awake", DEBUG_BUFFER_SIZE);
-            break;
-        case LOCKED_MONITOR_ASLEEP:
-            strncpy(buffer, "Locked Monitor Asleep", DEBUG_BUFFER_SIZE);
-            break;
-        case LOCKED_FULL_NOTIFICATION_FUNC_A:
-            strncpy(buffer, "Locked Full Notification Function A", DEBUG_BUFFER_SIZE);
-            break;
-        case LOCKED_FULL_NOTIFICATION_FUNC_B:
-            strncpy(buffer, "Locked Full Notification Function B", DEBUG_BUFFER_SIZE);
-            break;
-        case EMERGENCY_OPEN:
-            strncpy(buffer, "Emergency Open", DEBUG_BUFFER_SIZE);
-            break;
-        default:
-            strncpy(buffer, "Error", DEBUG_BUFFER_SIZE);
-            break;
-    }
+	switch (mode) {
+	case UNLOCKED_EMPTY_ASLEEP:
+		strncpy(buffer, "Unlocked Empty Asleep", DEBUG_BUFFER_SIZE);
+		break;
+	case UNLOCKED_ASLEEP_TO_AWAKE:
+		strncpy(buffer, "Unlocked Asleep to Awake", DEBUG_BUFFER_SIZE);
+		break;
+	case UNLOCKED_EMPTY_AWAKE:
+		strncpy(buffer, "Unlocked Empty Awake", DEBUG_BUFFER_SIZE);
+		break;
+	case UNLOCKED_FULL_AWAKE_FUNC_A:
+		strncpy(buffer, "Unlocked Full Awake Function A", DEBUG_BUFFER_SIZE);
+		break;
+	case UNLOCKED_FULL_AWAKE_FUNC_B:
+		strncpy(buffer, "Unlocked Full Awake Function B", DEBUG_BUFFER_SIZE);
+		break;
+	case UNLOCKED_FULL_ASLEEP:
+		strncpy(buffer, "Unlocked Full Asleep", DEBUG_BUFFER_SIZE);
+		break;
+	case UNLOCKED_TO_LOCKED_AWAKE:
+		strncpy(buffer, "Unlocked to Locked Awake", DEBUG_BUFFER_SIZE);
+		break;
+	case LOCKED_FULL_AWAKE:
+		strncpy(buffer, "Locked Full Awake", DEBUG_BUFFER_SIZE);
+		break;
+	case LOCKED_FULL_ASLEEP:
+		strncpy(buffer, "Locked Full Asleep", DEBUG_BUFFER_SIZE);
+		break;
+	case LOCKED_MONITOR_AWAKE:
+		strncpy(buffer, "Locked Monitor Awake", DEBUG_BUFFER_SIZE);
+		break;
+	case LOCKED_MONITOR_ASLEEP:
+		strncpy(buffer, "Locked Monitor Asleep", DEBUG_BUFFER_SIZE);
+		break;
+	case LOCKED_FULL_NOTIFICATION_FUNC_A:
+		strncpy(buffer, "Locked Full Notification Function A", DEBUG_BUFFER_SIZE);
+		break;
+	case LOCKED_FULL_NOTIFICATION_FUNC_B:
+		strncpy(buffer, "Locked Full Notification Function B", DEBUG_BUFFER_SIZE);
+		break;
+	case EMERGENCY_OPEN:
+		strncpy(buffer, "Emergency Open", DEBUG_BUFFER_SIZE);
+		break;
+	default:
+		strncpy(buffer, "Error", DEBUG_BUFFER_SIZE);
+		break;
+	}
 
 }
 

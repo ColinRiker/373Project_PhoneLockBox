@@ -17,11 +17,14 @@ void nfcInit(void) {
 
 	PN532_I2C_Init(&pn532);
 	PN532_GetFirmwareVersion(&pn532, buff);
+
+#ifdef DEBUG_OUT
 	if (PN532_GetFirmwareVersion(&pn532, buff) == PN532_STATUS_OK) {
-	  printf("Found PN532 with firmware version: %d.%d\r\n", buff[1], buff[2]);
+		printf("Found PN532 with firmware version: %d.%d\r\n", buff[1], buff[2]);
 	} else {
-	  printf("Error PN532 failed to get firmware version\r\n");
+		printf("Error PN532 failed to get firmware version\r\n");
 	}
+#endif
 	PN532_SamConfiguration(&pn532);
 }
 

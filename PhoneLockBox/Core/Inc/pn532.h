@@ -172,12 +172,12 @@
 #define PN532_STATUS_OK                                                 (0)
 
 typedef struct _PN532 {
-    int (*reset)(void);
-    int (*read_data)(uint8_t* data, uint16_t count);
-    int (*write_data)(uint8_t *data, uint16_t count);
-    bool (*wait_ready)(uint32_t timeout);
-    int (*wakeup)(void);
-    void (*log)(const char* log);
+	int (*reset)(void);
+	int (*read_data)(uint8_t* data, uint16_t count);
+	int (*write_data)(uint8_t *data, uint16_t count);
+	bool (*wait_ready)(uint32_t timeout);
+	int (*wakeup)(void);
+	void (*log)(const char* log);
 } PN532;
 
 //Setup & Util Functions
