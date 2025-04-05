@@ -29,67 +29,67 @@ void accInit(void){
 
 void accRead(int16_t * x_axis,int16_t * y_axis,int16_t * z_axis){
 
-  uint8_t buf[10]= {ACC_FIRST_ADDR | (1 << 7)};
-  HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 1, 1000);
+	uint8_t buf[10]= {ACC_FIRST_ADDR | (1 << 7)};
+	HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 1, 1000);
 
-  uint8_t out_buf_8[6] = {};
-  HAL_I2C_Master_Receive(&hi2c1, ACC_READ, &out_buf_8[0], 6, 1000);
+	uint8_t out_buf_8[6] = {};
+	HAL_I2C_Master_Receive(&hi2c1, ACC_READ, &out_buf_8[0], 6, 1000);
 
 
-  *x_axis = (out_buf_8[1] << 8) | out_buf_8[0];
-  *y_axis =	(out_buf_8[3] << 8) | out_buf_8[2];
-  *z_axis = (out_buf_8[5] << 8) | out_buf_8[4];
+	*x_axis = (out_buf_8[1] << 8) | out_buf_8[0];
+	*y_axis =	(out_buf_8[3] << 8) | out_buf_8[2];
+	*z_axis = (out_buf_8[5] << 8) | out_buf_8[4];
 }
 
 
 BoxMode accResolve(void) {
 	switch (state.mode) {
-			case UNLOCKED_EMPTY_ASLEEP:
+	case UNLOCKED_EMPTY_ASLEEP:
 
-				break;
-			case UNLOCKED_ASLEEP_TO_AWAKE:
+		break;
+	case UNLOCKED_ASLEEP_TO_AWAKE:
 
-				break;
-			case UNLOCKED_EMPTY_AWAKE:
+		break;
+	case UNLOCKED_EMPTY_AWAKE:
 
-				break;
-			case UNLOCKED_FULL_AWAKE_FUNC_A:
+		break;
+	case UNLOCKED_FULL_AWAKE_FUNC_A:
 
-				break;
-			case UNLOCKED_FULL_AWAKE_FUNC_B:
+		break;
+	case UNLOCKED_FULL_AWAKE_FUNC_B:
 
-				break;
-			case UNLOCKED_FULL_ASLEEP:
+		break;
+	case UNLOCKED_FULL_ASLEEP:
 
-				break;
-			case UNLOCKED_TO_LOCKED_AWAKE:
+		break;
+	case UNLOCKED_TO_LOCKED_AWAKE:
 
-				break;
-			case LOCKED_FULL_AWAKE:
+		break;
+	case LOCKED_FULL_AWAKE:
 
-				break;
-			case LOCKED_FULL_ASLEEP:
+		break;
+	case LOCKED_FULL_ASLEEP:
 
-				break;
-			case LOCKED_MONITOR_AWAKE:
+		break;
+	case LOCKED_MONITOR_AWAKE:
 
-				break;
-			case LOCKED_MONITOR_ASLEEP:
+		break;
+	case LOCKED_MONITOR_ASLEEP:
 
-				break;
-			case LOCKED_FULL_NOTIFICATION_FUNC_A:
+		break;
+	case LOCKED_FULL_NOTIFICATION_FUNC_A:
 
-				break;
-			case LOCKED_FULL_NOTIFICATION_FUNC_B:
+		break;
+	case LOCKED_FULL_NOTIFICATION_FUNC_B:
 
-				break;
-			case EMERGENCY_OPEN:
+		break;
+	case EMERGENCY_OPEN:
 
-				break;
-			default:
+		break;
+	default:
 
-			break;
-			}
+		break;
+	}
 }
 
 void magInit(){
@@ -102,14 +102,14 @@ void magInit(){
 
 void magRead(int16_t * x_mag,int16_t * y_mag,int16_t * z_mag){
 
-  uint8_t buf[10]= {MAG_FIRST_ADDR | (1 << 7)};
-  HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 1, 1000);
+	uint8_t buf[10]= {MAG_FIRST_ADDR | (1 << 7)};
+	HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 1, 1000);
 
-  uint8_t out_buf_8[6] = {};
-  HAL_I2C_Master_Receive(&hi2c1, MAG_READ, &out_buf_8[0], 6, 1000);
+	uint8_t out_buf_8[6] = {};
+	HAL_I2C_Master_Receive(&hi2c1, MAG_READ, &out_buf_8[0], 6, 1000);
 
 
-  *x_mag = (out_buf_8[1] << 8) | out_buf_8[0];
-  *y_mag =	(out_buf_8[3] << 8) | out_buf_8[2];
-  *z_mag = (out_buf_8[5] << 8) | out_buf_8[4];
+	*x_mag = (out_buf_8[1] << 8) | out_buf_8[0];
+	*y_mag =	(out_buf_8[3] << 8) | out_buf_8[2];
+	*z_mag = (out_buf_8[5] << 8) | out_buf_8[4];
 }

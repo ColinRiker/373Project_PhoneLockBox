@@ -11,52 +11,52 @@ int LCD_WIDTH = LCD_WIDTH_1;
 
 void screenResolve(void) {
 	switch (state.mode) {
-		case UNLOCKED_EMPTY_ASLEEP:
-
-			break;
-		case UNLOCKED_ASLEEP_TO_AWAKE:
-
-			break;
-		case UNLOCKED_EMPTY_AWAKE:
-
-			break;
-		case UNLOCKED_FULL_AWAKE_FUNC_A:
-
-			break;
-		case UNLOCKED_FULL_AWAKE_FUNC_B:
-
-			break;
-		case UNLOCKED_FULL_ASLEEP:
-
-			break;
-		case UNLOCKED_TO_LOCKED_AWAKE:
-
-			break;
-		case LOCKED_FULL_AWAKE:
-
-			break;
-		case LOCKED_FULL_ASLEEP:
-
-			break;
-		case LOCKED_MONITOR_AWAKE:
-
-			break;
-		case LOCKED_MONITOR_ASLEEP:
-
-			break;
-		case LOCKED_FULL_NOTIFICATION_FUNC_A:
-
-			break;
-		case LOCKED_FULL_NOTIFICATION_FUNC_B:
-
-			break;
-		case EMERGENCY_OPEN:
-
-			break;
-		default:
+	case UNLOCKED_EMPTY_ASLEEP:
 
 		break;
-		}
+	case UNLOCKED_ASLEEP_TO_AWAKE:
+
+		break;
+	case UNLOCKED_EMPTY_AWAKE:
+
+		break;
+	case UNLOCKED_FULL_AWAKE_FUNC_A:
+
+		break;
+	case UNLOCKED_FULL_AWAKE_FUNC_B:
+
+		break;
+	case UNLOCKED_FULL_ASLEEP:
+
+		break;
+	case UNLOCKED_TO_LOCKED_AWAKE:
+
+		break;
+	case LOCKED_FULL_AWAKE:
+
+		break;
+	case LOCKED_FULL_ASLEEP:
+
+		break;
+	case LOCKED_MONITOR_AWAKE:
+
+		break;
+	case LOCKED_MONITOR_ASLEEP:
+
+		break;
+	case LOCKED_FULL_NOTIFICATION_FUNC_A:
+
+		break;
+	case LOCKED_FULL_NOTIFICATION_FUNC_B:
+
+		break;
+	case EMERGENCY_OPEN:
+
+		break;
+	default:
+
+		break;
+	}
 }
 void ILI9341_SPI_Send(unsigned char SPI_Data)
 {
@@ -160,10 +160,10 @@ void ILI9341_Draw_Colour_Burst(uint16_t Colour, uint32_t Size)
 	unsigned char chifted = 	Colour>>8;;
 	unsigned char burst_buffer[Buffer_Size];
 	for(uint32_t j = 0; j < Buffer_Size; j+=2)
-		{
-			burst_buffer[j] = 	chifted;
-			burst_buffer[j+1] = Colour;
-		}
+	{
+		burst_buffer[j] = 	chifted;
+		burst_buffer[j+1] = Colour;
+	}
 
 	uint32_t Sending_Size = Size*2;
 	uint32_t Sending_in_Block = Sending_Size/Buffer_Size;
@@ -172,9 +172,9 @@ void ILI9341_Draw_Colour_Burst(uint16_t Colour, uint32_t Size)
 	if(Sending_in_Block != 0)
 	{
 		for(uint32_t j = 0; j < (Sending_in_Block); j++)
-			{
+		{
 			HAL_SPI_Transmit(HSPI_INSTANCE, (unsigned char *)burst_buffer, Buffer_Size, 10);
-			}
+		}
 	}
 
 	//REMAINDER!
@@ -325,7 +325,7 @@ void ILI9341_Init(void)
 	ILI9341_Write_Command(0x29);
 
 	//STARTING ROTATION
-//	ILI9341_Set_Rotation(SCREEN_VERTICAL_1);
+	//	ILI9341_Set_Rotation(SCREEN_VERTICAL_1);
 	ILI9341_Set_Rotation(SCREEN_HORIZONTAL_1);
 
 }
@@ -334,7 +334,7 @@ void ILI9341_Init(void)
 /*Sends single pixel colour information to LCD*/
 void ILI9341_Draw_Colour(uint16_t Colour)
 {
-//SENDS COLOUR
+	//SENDS COLOUR
 	unsigned char TempBuffer[2] = {Colour>>8, Colour};
 	HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET);
@@ -398,13 +398,13 @@ void ILI9341_Draw_Rectangle(uint16_t X, uint16_t Y, uint16_t Width, uint16_t Hei
 {
 	if((X >=LCD_WIDTH) || (Y >=LCD_HEIGHT)) return;
 	if((X+Width-1)>=LCD_WIDTH)
-		{
-			Width=LCD_WIDTH-X;
-		}
+	{
+		Width=LCD_WIDTH-X;
+	}
 	if((Y+Height-1)>=LCD_HEIGHT)
-		{
-			Height=LCD_HEIGHT-Y;
-		}
+	{
+		Height=LCD_HEIGHT-Y;
+	}
 	ILI9341_Set_Address(X, Y, X+Width-1, Y+Height-1);
 	ILI9341_Draw_Colour_Burst(Colour, Height*Width);
 }
@@ -415,9 +415,9 @@ void ILI9341_Draw_Horizontal_Line(uint16_t X, uint16_t Y, uint16_t Width, uint16
 {
 	if((X >=LCD_WIDTH) || (Y >=LCD_HEIGHT)) return;
 	if((X+Width-1)>=LCD_WIDTH)
-		{
-			Width=LCD_WIDTH-X;
-		}
+	{
+		Width=LCD_WIDTH-X;
+	}
 	ILI9341_Set_Address(X, Y, X+Width-1, Y);
 	ILI9341_Draw_Colour_Burst(Colour, Width);
 }
@@ -428,9 +428,9 @@ void ILI9341_Draw_Vertical_Line(uint16_t X, uint16_t Y, uint16_t Height, uint16_
 {
 	if((X >=LCD_WIDTH) || (Y >=LCD_HEIGHT)) return;
 	if((Y+Height-1)>=LCD_HEIGHT)
-		{
-			Height=LCD_HEIGHT-Y;
-		}
+	{
+		Height=LCD_HEIGHT-Y;
+	}
 	ILI9341_Set_Address(X, Y, X, Y+Height-1);
 	ILI9341_Draw_Colour_Burst(Colour, Height);
 }
@@ -517,12 +517,12 @@ void ILI9341_Draw_Image(const char* Image_Array, uint8_t Orientation)
 		uint32_t counter = 0;
 		for(uint32_t i = 0; i < LCD_WIDTH*LCD_HEIGHT*2/BURST_MAX_SIZE; i++)
 		{
-				for(uint32_t k = 0; k< BURST_MAX_SIZE; k++)
-				{
-					Temp_small_buffer[k]	= Image_Array[counter+k];
-				}
-				HAL_SPI_Transmit(&hspi1, (unsigned char*)Temp_small_buffer, BURST_MAX_SIZE, 10);
-				counter += BURST_MAX_SIZE;
+			for(uint32_t k = 0; k< BURST_MAX_SIZE; k++)
+			{
+				Temp_small_buffer[k]	= Image_Array[counter+k];
+			}
+			HAL_SPI_Transmit(&hspi1, (unsigned char*)Temp_small_buffer, BURST_MAX_SIZE, 10);
+			counter += BURST_MAX_SIZE;
 		}
 		HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
 	}
@@ -538,12 +538,12 @@ void ILI9341_Draw_Image(const char* Image_Array, uint8_t Orientation)
 		uint32_t counter = 0;
 		for(uint32_t i = 0; i < LCD_WIDTH*LCD_HEIGHT*2/BURST_MAX_SIZE; i++)
 		{
-				for(uint32_t k = 0; k< BURST_MAX_SIZE; k++)
-				{
-					Temp_small_buffer[k]	= Image_Array[counter+k];
-				}
-				HAL_SPI_Transmit(&hspi1, (unsigned char*)Temp_small_buffer, BURST_MAX_SIZE, 10);
-				counter += BURST_MAX_SIZE;
+			for(uint32_t k = 0; k< BURST_MAX_SIZE; k++)
+			{
+				Temp_small_buffer[k]	= Image_Array[counter+k];
+			}
+			HAL_SPI_Transmit(&hspi1, (unsigned char*)Temp_small_buffer, BURST_MAX_SIZE, 10);
+			counter += BURST_MAX_SIZE;
 		}
 		HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
 	}
@@ -559,12 +559,12 @@ void ILI9341_Draw_Image(const char* Image_Array, uint8_t Orientation)
 		uint32_t counter = 0;
 		for(uint32_t i = 0; i < LCD_WIDTH*LCD_HEIGHT*2/BURST_MAX_SIZE; i++)
 		{
-				for(uint32_t k = 0; k< BURST_MAX_SIZE; k++)
-				{
-					Temp_small_buffer[k]	= Image_Array[counter+k];
-				}
-				HAL_SPI_Transmit(&hspi1, (unsigned char*)Temp_small_buffer, BURST_MAX_SIZE, 10);
-				counter += BURST_MAX_SIZE;
+			for(uint32_t k = 0; k< BURST_MAX_SIZE; k++)
+			{
+				Temp_small_buffer[k]	= Image_Array[counter+k];
+			}
+			HAL_SPI_Transmit(&hspi1, (unsigned char*)Temp_small_buffer, BURST_MAX_SIZE, 10);
+			counter += BURST_MAX_SIZE;
 		}
 		HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
 	}
@@ -580,12 +580,12 @@ void ILI9341_Draw_Image(const char* Image_Array, uint8_t Orientation)
 		uint32_t counter = 0;
 		for(uint32_t i = 0; i < LCD_WIDTH*LCD_HEIGHT*2/BURST_MAX_SIZE; i++)
 		{
-				for(uint32_t k = 0; k< BURST_MAX_SIZE; k++)
-				{
-					Temp_small_buffer[k]	= Image_Array[counter+k];
-				}
-				HAL_SPI_Transmit(&hspi1, (unsigned char*)Temp_small_buffer, BURST_MAX_SIZE, 10);
-				counter += BURST_MAX_SIZE;
+			for(uint32_t k = 0; k< BURST_MAX_SIZE; k++)
+			{
+				Temp_small_buffer[k]	= Image_Array[counter+k];
+			}
+			HAL_SPI_Transmit(&hspi1, (unsigned char*)Temp_small_buffer, BURST_MAX_SIZE, 10);
+			counter += BURST_MAX_SIZE;
 		}
 		HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
 	}
