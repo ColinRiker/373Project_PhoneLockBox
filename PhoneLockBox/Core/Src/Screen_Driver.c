@@ -2,6 +2,7 @@
 #include "Screen_Driver.h"
 #include "shared.h"
 #include "stm32l4xx_hal.h"
+#include <stdio.h>
 #define HSPI_INSTANCE &hspi1
 
 extern SPI_HandleTypeDef hspi1;
@@ -60,7 +61,22 @@ void screenResolve(void) {
 }
 void ILI9341_SPI_Send(unsigned char SPI_Data)
 {
-	HAL_SPI_Transmit(HSPI_INSTANCE, &SPI_Data, 1, 1);
+	HAL_StatusTypeDef rc = HAL_SPI_Transmit(HSPI_INSTANCE, &SPI_Data, 1, 1);
+#ifdef DEBUG_DISPLAY
+	switch(rc) {
+	case HAL_OK:
+		break;
+	case HAL_ERROR:
+		printf("[ERROR] SPI send failed to ILI9341 with generic error code\n\r");
+		break;
+	case HAL_BUSY:
+		printf("[ERROR] SPI send failed to ILI9341, device is busy\n\r");
+		break;
+	case HAL_TIMEOUT:
+		printf("[ERROR] SPI send failed to ILI9341, timeout occurred\n\r");
+		break;
+	}
+#endif /*END DEBUG_DISPLAY*/
 }
 
 void ILI9341_Write_Command(uint8_t Command)

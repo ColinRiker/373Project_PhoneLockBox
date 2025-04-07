@@ -12,6 +12,10 @@
 #define DEBUG_BUFFER_SIZE 100
 #define MAX_TIME 10000
 
+//System Specific Debug Flags
+#define DEBUG_NFC
+#define DEBUG_DISPLAY
+
 #include <string.h>
 
 enum {

@@ -61,6 +61,12 @@ void Error_Handler(void);
 #define PN532_RST_GPIO_Port GPIOD
 #define PN532_REQ_Pin GPIO_PIN_2
 #define PN532_REQ_GPIO_Port GPIOD
+#define ILI9341_CS_Pin GPIO_PIN_3
+#define ILI9341_CS_GPIO_Port GPIOB
+#define ILI9341_RESET_Pin GPIO_PIN_4
+#define ILI9341_RESET_GPIO_Port GPIOB
+#define ILI9341_DC_Pin GPIO_PIN_5
+#define ILI9341_DC_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

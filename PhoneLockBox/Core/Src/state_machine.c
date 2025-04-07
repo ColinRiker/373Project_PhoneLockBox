@@ -3,7 +3,7 @@
 #include "rotary_encoder.h"
 #include "accelerometer.h"
 // #include "microphone.h" // add when ready
-// #include "nfc.h"        // add when ready
+#include "nfc.h"        // add when ready
 // #include "display.h"    // optional
 
 #include <stdio.h>
