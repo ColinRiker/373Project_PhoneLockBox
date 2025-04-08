@@ -36,10 +36,10 @@ enum {
 } typedef BoxMode;
 
 enum {
-	NO_INTERUPT,
-	ENCODER_INTERUPT,
-	MICROPHONE_INTERUPT,
-	ENCODER_AND_MICROPHONE_INTERUPT
+	NO_INTERRUPT,
+	ENCODER_INTERRUPT,
+	MICROPHONE_INTERRUPT,
+	ENCODER_AND_MICROPHONE_INTERRUPT
 } typedef BoxInterruptFlag;
 
 struct {
@@ -55,12 +55,23 @@ extern BoxState next_state;
 
 static inline void InterruptFlagToStr(char* buffer, BoxInterruptFlag flag) {
 	switch (flag) {
-	case:
+	case NO_INTERRUPT:
+		strncpy(buffer, "No Interrupt", DEBUG_BUFFER_SIZE);
+		break;
+	case ENCODER_INTERRUPT:
+		strncpy(buffer, "Encoder Interrupt", DEBUG_BUFFER_SIZE);
+		break;
+	case MICROPHONE_INTERRUPT:
+		strncpy(buffer, "Microphone Interrupt", DEBUG_BUFFER_SIZE);
+		break;
+	case ENCODER_AND_MICROPHONE_INTERRUPT:
+		strncpy(buffer, "Encoder & Microphone Interrupt", DEBUG_BUFFER_SIZE);
+		break;
+	default:
+		strncpy(buffer, "Error", DEBUG_BUFFER_SIZE);
+		break;
 	}
 
-    default:
-        strncpy(buffer, "Error", DEBUG_BUFFER_SIZE);
-        break;
 }
 
 static inline void StateToStr(char* buffer, BoxMode mode) {
@@ -112,7 +123,6 @@ static inline void StateToStr(char* buffer, BoxMode mode) {
 		strncpy(buffer, "Error", DEBUG_BUFFER_SIZE);
 		break;
 	}
-
 }
 
 #endif /* INC_SHARED_H_ */
