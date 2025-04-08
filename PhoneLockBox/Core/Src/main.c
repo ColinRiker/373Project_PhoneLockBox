@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2025 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -23,7 +23,9 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include <stdio.h>
 #include "Screen_Driver.h"
+#include "nfc.h"
 #include "accelerometer.h"
 #include "rotary_encoder.h"
 #include "shared.h"
@@ -56,6 +58,7 @@ TIM_HandleTypeDef htim1;
 /* USER CODE BEGIN PV */
 BoxState state;
 BoxState next_state;
+PN532 pn532;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,7 +78,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
 		printf("EXTI 0 Interrupt Triggered from KY-037 D0!\n");
 	} else if (GPIO_Pin == GPIO_PIN_10) {
-        printf("EXTI 10 Interrupt Triggered from PEC-11 SW!\n");
+		printf("EXTI 10 Interrupt Triggered from PEC-11 SW!\n");
 	}
 }
 /* USER CODE END 0 */
@@ -124,14 +127,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	ILI9341_Init();//initial driver setup to drive ili9341
 	ILI9341_Fill_Screen(WHITE);
-	//	ILI9341_Draw_Text("This is a text test",FONT4,10,10,BLUE,RED);
 
-  accInit();
-  magInit();
-  rotencInit();
-  
-  uint32_t ADC_VAL = 0; //added for printing mic values
-  float vref = 3.3; // voltage reference for mic
+	accInit();
+	magInit();
+	rotencInit();
+	nfcInit();
+
 
 
 
@@ -149,62 +150,45 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+	while (1)
+	{
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	StateToStr(debug_buffer, state.mode);
-	printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
-    
-    //ADC
-    HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
-	HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
-	ADC_VAL = HAL_ADC_GetValue(&hadc1);//retrieve value --> pulled from lab 7
+		StateToStr(debug_buffer, state.mode);
+		printf("Box State: %s, Time: %u\n\r", debug_buffer, state.time);
 
-	float volt = ADC_VAL/(4096.0) * vref; // not sure if this is needed for mic input
-	printf("ADC %d volt from mic %f\n\r", (int) ADC_VAL, volt );
-	//END ADC
-    
-    //ENCODER
-	printf("Encoder CNT: %lu\n\r", TIM1->CNT);
-    //END ENCODER
-    
-    //ACCEL
-	accRead(&x_acc,&y_acc,&z_acc);
+		//ACCEL
+		accRead(&x_acc,&y_acc,&z_acc);
+		magRead(&x_mag,&y_mag,&z_mag);
 
-	magRead(&x_mag,&y_mag,&z_mag);
+		char acc_str[100];
+		char mag_str[100];
+		char enc_str[100];
+		char nfc_str[100];
+
+		char has_nfc_target =  nfcHasTarget() ? 'T' : 'F';
 
 
+		sprintf(acc_str,"X: %f , Y: %f , Z: %f",x_acc/coef,y_acc/coef,z_acc/coef);
+		sprintf(mag_str,"X: %f , Y: %f , Z: %f",x_mag/coef,y_mag/coef,z_mag/coef);
+		sprintf(enc_str,"%lu",TIM1->CNT);
+		sprintf(nfc_str,"Tag Present: %c", has_nfc_target);
 
-	char acc_str[100];
-	char mag_str[100];
-	char enc_str[100];
-
-
-	sprintf(acc_str,"X: %f , Y: %f , Z: %f",x_acc/coef,y_acc/coef,z_acc/coef);
-	sprintf(mag_str,"X: %f , Y: %f , Z: %f",x_mag/coef,y_mag/coef,z_mag/coef);
-	sprintf(enc_str,"%d",TIM1->CNT);
-
-	ILI9341_Draw_Text("Acceleration:",FONT4,10,10,BLACK,WHITE);
-	ILI9341_Draw_Text(acc_str,FONT2,10,40,BLACK,WHITE);
-
-	ILI9341_Draw_Text("Magnet:",FONT4,10,70,BLACK,WHITE);
-	ILI9341_Draw_Text(mag_str,FONT2,10,100,BLACK,WHITE);
-
-	ILI9341_Draw_Text("Encoder:",FONT4,10,130,BLACK,WHITE);
-	ILI9341_Draw_Text(enc_str,FONT4,10,160,BLACK,WHITE);
-
-	printf("ACC-> X: %f Y: %f Z: %f \n\r",x_acc/coef,y_acc/coef,z_acc/coef);
-	printf("MAG-> X: %f Y: %f Z: %f \n\r",x_mag/coef,y_mag/coef,z_mag/coef);
+		ILI9341_Draw_Text("Acceleration:",FONT4,10,10,BLACK,WHITE);
+		ILI9341_Draw_Text(acc_str,FONT2,10,40,BLACK,WHITE);
 
 
+		ILI9341_Draw_Text("Magnet:",FONT4,10,70,BLACK,WHITE);
+		ILI9341_Draw_Text(mag_str,FONT2,10,100,BLACK,WHITE);
 
+		ILI9341_Draw_Text("Encoder:",FONT4,10,130,BLACK,WHITE);
+		ILI9341_Draw_Text(enc_str,FONT4,10,160,BLACK,WHITE);
 
+		ILI9341_Draw_Text("NFC:",FONT4,10,190,BLACK,WHITE);
+		ILI9341_Draw_Text(nfc_str,FONT2,10,210,BLACK,WHITE);
 
-    //END ACCEL
-    
-  }
+	}
   /* USER CODE END 3 */
 }
 
@@ -526,7 +510,10 @@ static void MX_GPIO_Init(void)
   HAL_PWREx_EnableVddIO2();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, PN532_RST_Pin|PN532_REQ_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, ILI9341_CS_Pin|ILI9341_RESET_Pin|ILI9341_DC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PE2 PE3 */
   GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
@@ -559,14 +546,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PB0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB2 PB6 */
   GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_6;
@@ -666,12 +645,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PD2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  /*Configure GPIO pins : PN532_RST_Pin PN532_REQ_Pin */
+  GPIO_InitStruct.Pin = PN532_RST_Pin|PN532_REQ_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF12_SDMMC1;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD3 PD4 PD5 PD6 */
@@ -682,8 +660,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB3 PB4 PB5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5;
+  /*Configure GPIO pins : ILI9341_CS_Pin ILI9341_RESET_Pin ILI9341_DC_Pin */
+  GPIO_InitStruct.Pin = ILI9341_CS_Pin|ILI9341_RESET_Pin|ILI9341_DC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -713,12 +691,12 @@ static void MX_GPIO_Init(void)
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
-  #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif /* __GNUC__ */
 PUTCHAR_PROTOTYPE
 {
-  HAL_UART_Transmit(&hlpuart1, (uint8_t *)&ch, 1, 0xFFFF);
-  return ch;
+	HAL_UART_Transmit(&hlpuart1, (uint8_t *)&ch, 1, 0xFFFF);
+	return ch;
 }
 #endif /* DEBUG_OUT */
 
@@ -733,11 +711,11 @@ PUTCHAR_PROTOTYPE
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1)
+	{
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -752,7 +730,7 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
+	/* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
