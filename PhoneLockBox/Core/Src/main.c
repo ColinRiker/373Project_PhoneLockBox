@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "stm32l4xx_hal_tim.h"
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -272,7 +273,7 @@ int main(void)
 
   float vref = 3.3; // voltage reference for mic
 
-  uint32_t ADC_MIN = 1970;
+  uint32_t ADC_MIN = 1950;
   uint32_t ADC_MAX = 0;
   uint32_t ADC_SAMPLES = 20;
   static int sample_count = 0;
@@ -281,6 +282,9 @@ int main(void)
   uint32_t last_interrupt_time=0;
   static int interrupt_count = 0;
   uint32_t average = 0;
+  bool match = false;
+  float time_min_thresh = 0.4;
+  float time_max_thresh = 0.9;
 
 //HAL_ADC_Start(&hadc1);//start conversion --> pulled from lab 7
 //HAL_ADC_PollForConversion(&hadc1, 0xFFFFFFFF);//wait for conversion to finish --> pulled from lab 7
@@ -297,6 +301,7 @@ int main(void)
     uint32_t sample = HAL_ADC_GetValue(&hadc1);
 	float volts = sample/(4096.0) * vref;
 
+	//this is the response to the interrupt in my main
     if(mic_triggered == 1){
 		mic_triggered = 0;
 		uint32_t now = __HAL_TIM_GET_COUNTER(&htim2);
@@ -320,21 +325,14 @@ int main(void)
             }
 
            printf("Interrupt #%lu triggered at %lu µs (%.2f V)\n", interrupt_count, now, volts);
+
            	  if(interrupt_count == 20){
-           		print_matrix_flag = 1;
+           		print_matrix_flag = 1; //print flag is used to count to 20
            	  }
-//            if (interrupt_count >= MAX_ENTRIES) {
-//            	print_matrix_flag = 1;
 //
-//                printf("\n--- Final Matrix ---\n");
-//                for (uint32_t i = 0; i < matrix_index; i++) {
-//                    printf("Int %3lu | Δt: %6lu us | ADC: %4lu | Volt: %.2f V\n",
-//                           matrix[i][0], matrix[i][1], matrix[i][2], matrix[i][3] / 1000.0f);
-//                }
-//                interrupt_count = 0;
-//                matrix_index = 0;
-//            }
         }
+
+    //this is me keeping track of my sample count for ADc stuff, kind of useless rn but gives us a purpose for that pin
     sample_count++;
     running_sum = running_sum+sample;
 
@@ -343,7 +341,7 @@ int main(void)
     	sample_count = 0;
     	running_sum = 0;
     	if(average>ADC_MIN){
-    	    printf("Live ADC Sample: %lu (%.2f V)\n", average, volts);
+    	    printf("Live ADC Sample: %lu %lu (%.2f V)\n", average, running_sum, volts);
     	    HAL_Delay(1);
     	}
     }
@@ -353,21 +351,10 @@ int main(void)
     // 2. If interrupt triggered enough times, print matrix
     if (print_matrix_flag) {
         print_matrix_flag = 0;
-
-//        printf("\n=== Interrupts Triggered: %lu ===\n", interrupt_count);
-//        for (int i = 0; i < matrix_index; i++) {
-//            printf("Event %3lu: Δt = %6lu us | ADC = %4lu | %.2f V\n",
-//                   matrix[i][0],
-//                   matrix[i][1],
-//                   matrix[i][2],
-//                   matrix[i][3] / 1000.0f);
 //
-//            HAL_Delay(2);  // Prevent UART overload
-//        }
-//        printf("=== End of Matrix ===\n\n");
-
         uint32_t sum_deltas = 0;
        	uint32_t sum_volts = 0;
+       	float time_total= 0.0;
         printf("=== Last %d Interrupts (ring buffer) ===\n", MAX_ENTRIES);
         for (int i = 0; i < MAX_ENTRIES; i++) {
             uint32_t idx = (matrix_index + i) % MAX_ENTRIES;
@@ -383,15 +370,23 @@ int main(void)
 
         // Optional: reset for next round
         for (int r = 0; r < MAX_ENTRIES; r++) {
-        	sum_deltas += matrix[r][2];
-        	sum_volts += matrix[r][4];
+        	sum_deltas += matrix[r][1];
+        	sum_volts += (float)matrix[r][3]/1000.0f;
+        	time_total = (float)sum_deltas/1000000.0f;
         }
-        printf("time gap total = %lu and voltage total = %lu/n", sum_deltas, sum_volts);
+        printf("time gap total = %f seconds and voltage total = %f\n", time_total, sum_volts);
 
+        if((time_total <= time_max_thresh) && (time_total >= time_min_thresh)){
+        	match = true;
+        	printf("match==true!");
+        }
+
+        match = false;
         matrix_index = 0;
         interrupt_count = 0;
         sum_deltas = 0;
         sum_volts = 0;
+        time_total=0;
     }
 
     // 3. (Optional) Handle other flags, UI, commands, etc.
