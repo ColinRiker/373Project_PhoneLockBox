@@ -5,13 +5,19 @@
  *      Author: colinriker
  */
 
-#include "accelerometer.h"
 #include <math.h>
 #include <stdint.h>
-#include "stm32l4xx_hal.h"
 #include <stdio.h>
+#include <stdbool.h>
 
+#include "accelerometer.h"
+#include "stm32l4xx_hal.h"
+#include "shared.h"
 
+extern Vector3D accelerometer_state;
+extern Vector3D prev_accelerometer_state;
+extern Vector3D magnometer_state;
+extern Vector3D prev_magnometer_state;
 
 void accCheck(void){
 	uint8_t buf[10]= {IRA_REG_M};
@@ -23,11 +29,18 @@ void accCheck(void){
 
 void accInit(void){
 	uint8_t buf[10]= {CTRL_REG1_A,0x97};
+
+	accelerometer_state.x_componenet = 0;
+	accelerometer_state.y_componenet = 0;
+	accelerometer_state.z_componenet - 0;
+
+	prev_accelerometer_state = accelerometer_state;
+
 	HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 2, 1000);
 }
 
 
-void accRead(int16_t * x_axis,int16_t * y_axis,int16_t * z_axis){
+void accRead(){
 
 	uint8_t buf[10]= {ACC_FIRST_ADDR | (1 << 7)};
 	HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 1, 1000);
@@ -35,64 +48,20 @@ void accRead(int16_t * x_axis,int16_t * y_axis,int16_t * z_axis){
 	uint8_t out_buf_8[6] = {};
 	HAL_I2C_Master_Receive(&hi2c1, ACC_READ, &out_buf_8[0], 6, 1000);
 
-
-	*x_axis = (out_buf_8[1] << 8) | out_buf_8[0];
-	*y_axis =	(out_buf_8[3] << 8) | out_buf_8[2];
-	*z_axis = (out_buf_8[5] << 8) | out_buf_8[4];
+	accelerometer_state.x_componenet = (out_buf_8[1] << 8) | out_buf_8[0];
+	accelerometer_state.y_componenet =(out_buf_8[3] << 8) | out_buf_8[2];
+	accelerometer_state.z_componenet =(out_buf_8[5] << 8) | out_buf_8[4];
 }
 
-
-BoxMode accResolve(void) {
-	switch (state.mode) {
-	case UNLOCKED_EMPTY_ASLEEP:
-
-		break;
-	case UNLOCKED_ASLEEP_TO_AWAKE:
-
-		break;
-	case UNLOCKED_EMPTY_AWAKE:
-
-		break;
-	case UNLOCKED_FULL_AWAKE_FUNC_A:
-
-		break;
-	case UNLOCKED_FULL_AWAKE_FUNC_B:
-
-		break;
-	case UNLOCKED_FULL_ASLEEP:
-
-		break;
-	case UNLOCKED_TO_LOCKED_AWAKE:
-
-		break;
-	case LOCKED_FULL_AWAKE:
-
-		break;
-	case LOCKED_FULL_ASLEEP:
-
-		break;
-	case LOCKED_MONITOR_AWAKE:
-
-		break;
-	case LOCKED_MONITOR_ASLEEP:
-
-		break;
-	case LOCKED_FULL_NOTIFICATION_FUNC_A:
-
-		break;
-	case LOCKED_FULL_NOTIFICATION_FUNC_B:
-
-		break;
-	case EMERGENCY_OPEN:
-
-		break;
-	default:
-
-		break;
-	}
+bool accHasMoved() {
+	return VectorDelta(&accelerometer_state, &prev_accelerometer_state) >= ACCELERATION_WAKE_DELTA;
 }
 
 void magInit(){
+	magnometer_state.x_componenet = 0;
+	magnometer_state.y_componenet = 0;
+	magnometer_state.z_componenet = 0;
+
 	//bin is setting to 3.0 hz
 	uint8_t buf[10]= {CRA_REG_M | (1 << 7),0b00001000,0b01100000,0b00000000};
 	HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 4, 1000);
@@ -100,7 +69,7 @@ void magInit(){
 
 
 
-void magRead(int16_t * x_mag,int16_t * y_mag,int16_t * z_mag){
+void magRead(Vector3D* vec){
 
 	uint8_t buf[10]= {MAG_FIRST_ADDR | (1 << 7)};
 	HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 1, 1000);
@@ -109,7 +78,11 @@ void magRead(int16_t * x_mag,int16_t * y_mag,int16_t * z_mag){
 	HAL_I2C_Master_Receive(&hi2c1, MAG_READ, &out_buf_8[0], 6, 1000);
 
 
-	*x_mag = (out_buf_8[1] << 8) | out_buf_8[0];
-	*y_mag =	(out_buf_8[3] << 8) | out_buf_8[2];
-	*z_mag = (out_buf_8[5] << 8) | out_buf_8[4];
+	vec->x_componenet = (out_buf_8[1] << 8) | out_buf_8[0];
+	vec->y_componenet =	(out_buf_8[3] << 8) | out_buf_8[2];
+	vec->z_componenet = (out_buf_8[5] << 8) | out_buf_8[4];
+}
+
+void magIsClosed(void) {
+
 }

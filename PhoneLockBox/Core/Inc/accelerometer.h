@@ -9,9 +9,12 @@
 #define INC_ACCELEROMETER_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "stm32l4xx_hal.h"
 #include "shared.h"
+
+#define ACCELERATION_WAKE_DELTA 1000
 
 #define SAD_W_M 0x3C
 #define SAD_R_M 0x3D
@@ -31,14 +34,18 @@
 extern BoxState state;
 extern BoxState next_state;
 extern I2C_HandleTypeDef hi2c1;
+extern Vector3D accelerometer_state;
+extern Vector3D prev_accelerometer_state;
+extern Vector3D magnometer_state;
+extern Vector3D prev_magnometer_state;
 
 void accInit(void);
-void accRead(int16_t * x_axis,int16_t * y_axis,int16_t * z_axis);
-BoxMode accResolve();
+void accRead(void);
+bool accHasMoved();
 void accCheck(void);
 
 void magInit(void);
-void magRead(int16_t * x_mag,int16_t * y_mag,int16_t * z_mag);
+void magRead(Vector3D* vec);
 BoxMode magResolve(void);
 
 #endif /* INC_ACCELEROMETER_H_ */

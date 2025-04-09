@@ -17,6 +17,7 @@
 #define DEBUG_DISPLAY
 
 #include <string.h>
+#include <stdint.h>
 
 enum {
 	UNLOCKED_EMPTY_ASLEEP,
@@ -43,15 +44,26 @@ enum {
 } typedef BoxInterruptFlag;
 
 struct {
-	unsigned int time;
 	BoxMode mode;
 	BoxInterruptFlag interrupt_flag;
 } typedef BoxState;
+
+struct {
+	int16_t x_componenet;
+	int16_t y_componenet;
+	int16_t z_componenet;
+} typedef Vector3D;
 
 /* Global Variables */
 extern BoxState state;
 extern BoxState next_state;
 /* End Global Variables */
+
+static inline uint16_t VectorDelta(Vector3D *vec, Vector3D *prev_vec){
+	return (vec->x_componenet - prev_vec->x_componenet) +
+			(vec->y_componenet - prev_vec->y_componenet) +
+			(vec->z_componenet - prev_vec->z_componenet);
+}
 
 static inline void InterruptFlagToStr(char* buffer, BoxInterruptFlag flag) {
 	switch (flag) {
@@ -71,7 +83,6 @@ static inline void InterruptFlagToStr(char* buffer, BoxInterruptFlag flag) {
 		strncpy(buffer, "Error", DEBUG_BUFFER_SIZE);
 		break;
 	}
-
 }
 
 static inline void StateToStr(char* buffer, BoxMode mode) {
