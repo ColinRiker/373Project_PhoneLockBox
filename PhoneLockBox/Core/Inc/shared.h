@@ -9,12 +9,14 @@
 #define INC_SHARED_H_
 
 #define DEBUG_OUT //Comment out to not compile debug functions and statement
-#define DEBUG_BUFFER_SIZE 100
-#define MAX_TIME 10000
 
-//System Specific Debug Flags
+#ifdef DEBUG_OUT
+#define DEBUG_BUFFER_SIZE 100
+#define DEBUG_EVENT_CONTROLLER
 #define DEBUG_NFC
 #define DEBUG_DISPLAY
+#define DEBUG_AUDIO
+#endif /*END DEBUG DEFINES*/
 
 #include <string.h>
 #include <stdint.h>
@@ -65,7 +67,7 @@ static inline uint16_t VectorDelta(Vector3D *vec, Vector3D *prev_vec){
 			(vec->z_componenet - prev_vec->z_componenet);
 }
 
-static inline void InterruptFlagToStr(char* buffer, BoxInterruptFlag flag) {
+static inline void interruptFlagToStr(char* buffer, BoxInterruptFlag flag) {
 	switch (flag) {
 	case NO_INTERRUPT:
 		strncpy(buffer, "No Interrupt", DEBUG_BUFFER_SIZE);
@@ -85,7 +87,7 @@ static inline void InterruptFlagToStr(char* buffer, BoxInterruptFlag flag) {
 	}
 }
 
-static inline void StateToStr(char* buffer, BoxMode mode) {
+static inline void stateToStr(char* buffer, BoxMode mode) {
 
 	switch (mode) {
 	case UNLOCKED_EMPTY_ASLEEP:

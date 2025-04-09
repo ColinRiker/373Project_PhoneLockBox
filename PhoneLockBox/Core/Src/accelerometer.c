@@ -32,7 +32,7 @@ void accInit(void){
 
 	accelerometer_state.x_componenet = 0;
 	accelerometer_state.y_componenet = 0;
-	accelerometer_state.z_componenet - 0;
+	accelerometer_state.z_componenet = 0;
 
 	prev_accelerometer_state = accelerometer_state;
 
