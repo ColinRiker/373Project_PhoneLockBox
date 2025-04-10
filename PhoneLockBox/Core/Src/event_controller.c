@@ -67,7 +67,7 @@ EventReturnCode eventSchedule(uint8_t idx) {
 
 	switch(events[i].flag) {
 	case EVENT_SINGLE:
-		events[i].schedule_time = time_ms + schedule_offset;
+		events[i].schedule_time = time_ms + schedule_offset + context;
 	case EVENT_SIGNLE_IMMEDIATE:
 		events[i].schedule_time = time_ms;
 	case EVENT_DELTA:
