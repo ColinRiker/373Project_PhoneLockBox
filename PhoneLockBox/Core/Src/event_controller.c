@@ -14,59 +14,44 @@ Event events[MAX_EVENT_COUNT];
 uint32_t time_ms;
 
 /* Event Functions */
-EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, uint16_t period) {
-
-	uint8_t empty_idx = MAX_EVENT_COUNT;
+EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, uint16_t delta, uint8_t n_runs) {
+	uint16_t context = delta;
+	if (flag == EVENT_N_REPEAT || flag == EVENT_N_REPEAT_IMMEDIATE) {
+		context = (n_runs << 8) | (context & 0x00FF);
+	}
 
 	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
-		if (events[i].label == label) {
-			return EVENT_LABEL_ALREADY_USED;
+		if (events[i].label == EVENT_EMPTY) {
+			events[i].callback = callback;
+			events[i].label = label;
+			events[i].flag = flag;
+			events[i].context = context;
+			eventSchedule(i);
+			return EVENT_SUCCESS;
 		}
+	}
 
-		if (events[i].label == EVENT_EMPTY && empty_idx == MAX_EVENT_COUNT) {
-			empty_idx = i;
-		}
+	return EVENT_QUEUE_FULL;
+}
+
+EventReturnCode eventClear(void) {
+	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
+		events[i].callback = eventDefaultCallback;
+		events[i].label = EVENT_EMPTY;
+		events[i].flag = EVENT_DISABLED;
+		events[i].schedule_time = MAX_TIME;
+		events[i].context = 0;
 	}
 	return EVENT_SUCCESS;
 }
 
-EventReturnCode eventRemove(EventLabel label) {
-
-	//Checks to see if an not queued event entry exists
-	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
-		if (events[i].label == label) {
-			events[i].callback = eventDefaultCallback;
-			events[i].label = EVENT_EMPTY;
-			events[i].flag = EVENT_DISABLED;
-			events[i].context = 0;
-
-#ifdef DEBUG_EVENT_CONTROLLER
-			//char label[10] = {0};
-			printf("[INFO] Event dequeued and deleted from storage array");
-#endif /*END DEBUG_EVENT_CONTROLLER*/
-
-			return EVENT_SUCCESS;
-		}
-	}
-	return EVENT_LABEL_NOT_FOUND;
-}
-
-EventReturnCode eventUpdate(EventLabel label, EventFlag new_flag, uint16_t new_period) {
-	for(uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
-		if (events[i].label == label) {
-			events[i].flag = new_flag;
-			events[i].context = new_period;
-			return EVENT_SUCCESS;
-		}
-	}
-	return EVENT_LABEL_NOT_FOUND;
-}
 
 EventReturnCode eventControllerInit(void) {
 	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
 		events[i].callback = eventDefaultCallback;
 		events[i].label = EVENT_EMPTY;
 		events[i].flag = EVENT_DISABLED;
+		events[i].schedule_time = MAX_TIME;
 		events[i].context = 0;
 	}
 
@@ -77,35 +62,75 @@ EventReturnCode eventControllerInit(void) {
 	return EVENT_SUCCESS;
 }
 
-bool eventComparison(uint8_t idx_a, uint8_t idx_b){
-	//If Immedate flag higher
-	//If time
-	return false;
+EventReturnCode eventSchedule(uint8_t idx) {
+	uint8_t schedule_offset = time_ms % 7; //Hopefully helps to cheaply redistribute scheduling
+
+	switch(events[i].flag) {
+	case EVENT_SINGLE:
+		events[i].schedule_time = time_ms + schedule_offset;
+	case EVENT_SIGNLE_IMMEDIATE:
+		events[i].schedule_time = time_ms;
+	case EVENT_DELTA:
+		events[i].schedule_time = time_ms + schedule_offset;
+	case EVENT_DELTA_IMMEDIATE:
+		events[i].schedule_time = time_ms;
+	case EVENT_N_REPEAT:
+		events[i].schedule_time = time_ms + schedule_offset;
+	case EVENT_N_REPEAT_IMMEDIATE:
+		events[i].schedule_time = time_ms;
+	default:
+		return EVENT_GENERIC_ERROR;
+	}
+	return EVENT_SUCCESS;
 }
 
-inline uint8_t eventGetRepeatDelta(uint16_t context) {
-	return (uint8_t)(context & (0xFF00)) >> 8;
-}
+void eventRunner(void) {
+	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
+		if (events[i].schedule_time <= time_ms) {
+			events[i].callback();
 
-inline uint8_t eventGetRepeatN(uint16_t context) {
-	return (uint8_t)(context & (0x00FF));
-}
+			//Reschedule or Remove Handler
+			switch(events[i].flag) {
+			case EVENT_DELTA:
+				events[i].schedule_time = time_ms + events[i].context;
+				break;
 
-void eventScheduler(void) {
-	//On Register we append new events to the queue
-	//Time is the execution time, eg when the timer equals 5, run event b (which should be our head)
-	//Delta is for when the next copy of the event should be run
+			case EVENT_DELTA_IMMEDIATE:
+				events[i].flag = EVENT_DELTA;
+				events[i].schedule_time = time_ms + events[i].context;
+				break;
 
-	//Do we schedule new tasks immediately?
-	//Only if they have that flag
+			case EVENT_N_REPEAT_IMMEDIATE:
+				events[i].flag = EVENT_N_REPEAT;
 
+				uint8_t n = (events[i].context & 0xFF00) >> 8;
+				if (n > 1) {
+					events[i].context = ((n - 1) << 8) | (events[i].context & 0x00FF);
+				} else {
+					events[i].flag = EVENT_SINGLE;
+					events[i].context &= 0x00FF;
+				}
 
-	// for (event in events)
-	//	if (event.time <= now)
-	//		event.callback()
-	//
-	//		if (event.
+				events[i].schedule_time = time_ms + events[i].context;
+				break;
 
+			case EVENT_N_REPEAT:
+				uint8_t n = (events[i].context & 0xFF00) >> 8;
+				if (n > 1) {
+					events[i].context = ((n - 1) << 8) | (events[i].context & 0x00FF);
+				} else {
+					events[i].flag = EVENT_SINGLE;
+					events[i].context &= 0x00FF;
+				}
+
+				events[i].schedule_time = time_ms + events[i].context;
+				break;
+
+			default:
+				eventRemove(i);
+			}
+		}
+	}
 
 }
 
