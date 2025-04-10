@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX_FLAGS 8
+
+SFlag flags[MAX_FLAGS];
 
 extern BoxState state;
 extern BoxState next_state;
