@@ -33,7 +33,11 @@ typedef enum {
 typedef enum {
 	EVENT_DISABLED,
 	EVENT_SINGLE,
-	EVENT_DELTA
+	EVENT_SIGNLE_IMMEDIATE,
+	EVENT_DELTA,
+	EVENT_DELTA_IMMEDIATE,
+	EVENT_N_REPEAT,
+	EVENT_N_REPEAT_IMMEDIATE
 } EventFlag;
 
 typedef struct {
@@ -41,7 +45,7 @@ typedef struct {
 	EventLabel label;
 	EventFlag flag;
 	uint16_t schedule_time;
-	uint16_t period;
+	uint16_t context;
 } Event;
 
 EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, uint16_t period);
