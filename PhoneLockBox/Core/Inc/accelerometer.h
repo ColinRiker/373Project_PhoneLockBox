@@ -46,6 +46,7 @@ void accCheck(void);
 
 void magInit(void);
 void magRead(Vector3D* vec);
+bool magIsClosed(void);
 BoxMode magResolve(void);
 
 #endif /* INC_ACCELEROMETER_H_ */

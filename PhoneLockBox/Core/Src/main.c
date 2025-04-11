@@ -32,6 +32,7 @@
 #include "rotary_encoder.h"
 #include "shared.h"
 #include "font.h"
+#include "audio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,6 +78,7 @@ static void MX_TIM1_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM2_Init(void);
+
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
 
@@ -135,6 +137,7 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_TIM2_Init();
+
   /* USER CODE BEGIN 2 */
 	ILI9341_Init();//initial driver setup to drive ili9341
 	ILI9341_Fill_Screen(WHITE);
@@ -145,7 +148,6 @@ int main(void)
 	rotencInit();
 	nfcInit();
 
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -153,6 +155,37 @@ int main(void)
 	while (1)
 	{
     /* USER CODE END WHILE */
+		accCheck();
+		accRead();
+		magRead(&magnometer_state);
+
+		char acc_str[100];
+		char mag_str[100];
+		char enc_str[100];
+		char nfc_and_audio_str[100];
+
+		char audio_match = audioMatch() ? 'T' : 'F';
+		char has_nfc_target = nfcHasTarget() ? 'T' :'F';
+		char acc_moved = accHasMoved() ? 'T': 'F';
+		char mag_closed = magIsClosed() ? 'T':'F';
+
+		sprintf(acc_str, "Box Moved: %c",acc_moved );
+		sprintf(mag_str,"Lid Closed: %c", mag_closed);
+		sprintf(nfc_and_audio_str, "Tag Present: %c   Audio Match: %c", has_nfc_target, audio_match);
+		sprintf(enc_str, "%lu", TIM1->CNT);
+
+		ILI9341_Draw_Text("Acceleration:", FONT4,10,10,BLACK,WHITE);
+		ILI9341_Draw_Text(acc_str, FONT2,10,40,BLACK,WHITE);
+
+		ILI9341_Draw_Text("Magnet:", FONT4,10,70,BLACK,WHITE);
+		ILI9341_Draw_Text(mag_str, FONT2,10,100,BLACK,WHITE);
+
+		ILI9341_Draw_Text("Encoder:", FONT4,10,130,BLACK,WHITE);
+		ILI9341_Draw_Text(enc_str, FONT4,10,160,BLACK,WHITE);
+
+		ILI9341_Draw_Text("NFC and Audio Match:", FONT4,10,190,BLACK,WHITE);
+		ILI9341_Draw_Text(nfc_and_audio_str, FONT2,10,210,BLACK,WHITE);
+
 
     /* USER CODE BEGIN 3 */
 

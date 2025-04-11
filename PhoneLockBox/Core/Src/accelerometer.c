@@ -83,6 +83,6 @@ void magRead(Vector3D* vec){
 	vec->z_componenet = (out_buf_8[5] << 8) | out_buf_8[4];
 }
 
-void magIsClosed(void) {
-
+bool magIsClosed(void) {
+	return !(magnometer_state.x_componenet || magnometer_state.y_componenet || magnometer_state.y_componenet);
 }
