@@ -43,12 +43,12 @@ void audioCount(void) {
 	if (audio_count < MAX_ENTRIES) {
 		matrix[audio_count] = delta;
 	}
-#ifdef DEBUG_AUDIO
+//#ifdef DEBUG_AUDIO
 	printf("Interrupt #%lu triggered at %lu µs \n", audio_count, now);
-#endif /* END DEBUG_AUDIO */
+//#endif /* END DEBUG_AUDIO */
 
 	if(audio_count == MAX_ENTRIES){
-		//Set Flag so scheduler/state machine/event whatever calls audioMatch;
+		audio_count =0;//Set Flag so scheduler/state machine/event whatever calls audioMatch;
 	}
 
 }
@@ -57,29 +57,37 @@ bool audioMatch(void) {
 	uint32_t sum_deltas = 0;
 	float time_total= 0.0;
 
-#ifdef DEBUG_AUDIO
+//#ifdef DEBUG_AUDIO
 	printf("=== Last %d Interrupts (ring buffer) ===\n", MAX_ENTRIES);
 	for (int i = 0; i < MAX_ENTRIES; i++) {
 
 		printf("Event %d: Δt = %lu us\n\r", i, matrix[i]);
 
 	}
-#endif /* END DEBUG_AUDIO */
+//#endif /* END DEBUG_AUDIO */
 
 	for (int r = 0; r < MAX_ENTRIES; r++) {
 		sum_deltas += matrix[r];
-		time_total = (float)sum_deltas/1000000.0f;
 	}
+	time_total = (float)sum_deltas/1000000.0f;
 
-#ifdef DEBUG_AUDIO
+
+//#ifdef DEBUG_AUDIO
 	printf("time gap total = %f seconds\n", time_total);
-#endif /* END DEBUG_AUDIO */
+//#endif /* END DEBUG_AUDIO */
 
-	audio_count = 0;
+
 	for (uint8_t i = 0; i < MAX_ENTRIES; ++i) {
 		matrix[i] = 0;
 	}
 
-	return (time_total <= TIME_MAX_THRESH) && (time_total >= TIME_MIN_THRESH);
+	if((time_total <= TIME_MAX_THRESH) && (time_total >= TIME_MIN_THRESH)){
+		printf("match\n\n\n");
+		return true;
+
+	}else{
+		return false;
+	}
+
 }
 
