@@ -41,7 +41,8 @@ extern Vector3D prev_magnometer_state;
 
 void accInit(void);
 void accRead(void);
-bool accHasMoved();
+bool accHasMoved(void);
+void accDeltaEvent(void);
 void accCheck(void);
 
 void magInit(void);

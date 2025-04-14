@@ -42,8 +42,6 @@ const uint8_t PN532_FRAME_START[] = {0x00, 0x00, 0xFF};
 
 #define _I2C_ADDRESS 0x48
 #define _I2C_TIMEOUT 10
-#define PN532_FRAME_MAX_LENGTH 255
-#define PN532_DEFAULT_TIMEOUT 1000
 
 
 extern I2C_HandleTypeDef hi2c1;
@@ -183,7 +181,7 @@ int PN532_CallFunction(
 	// Send frame and wait for response.
 	if (PN532_WriteFrame(pn532, buff, params_length + 2) != PN532_STATUS_OK) {
 		pn532->wakeup();
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 		pn532->log("Trying to wakeup");
 #endif
 		return PN532_STATUS_ERROR;
@@ -195,7 +193,7 @@ int PN532_CallFunction(
 	pn532->read_data(buff, sizeof(PN532_ACK));
 	for (uint8_t i = 0; i < sizeof(PN532_ACK); i++) {
 		if (PN532_ACK[i] != buff[i]) {
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 			pn532->log("Did not receive expected ACK from PN532!");
 #endif
 			return PN532_STATUS_ERROR;
@@ -209,7 +207,7 @@ int PN532_CallFunction(
 
 	// Check that response is for the called function.
 	if (! ((buff[0] == PN532_PN532TOHOST) && (buff[1] == (command+1)))) {
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 		pn532->log("Received unexpected command response!");
 #endif
 		return PN532_STATUS_ERROR;
@@ -276,13 +274,13 @@ int PN532_ReadPassiveTarget(
 	}
 	// Check only 1 card with up to a 7 byte UID is present.
 	if (buff[0] != 0x01) {
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 		pn532->log("More than one card detected!");
 #endif
 		return PN532_STATUS_ERROR;
 	}
 	if (buff[5] > 7) {
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 		pn532->log("Found card with unexpectedly long UID!");
 #endif
 		return PN532_STATUS_ERROR;

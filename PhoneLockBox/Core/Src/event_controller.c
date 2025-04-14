@@ -65,19 +65,19 @@ EventReturnCode eventControllerInit(void) {
 EventReturnCode eventSchedule(uint8_t idx) {
 	uint8_t schedule_offset = time_ms % 7; //Hopefully helps to cheaply redistribute scheduling
 
-	switch(events[i].flag) {
+	switch(events[idx].flag) {
 	case EVENT_SINGLE:
-		events[i].schedule_time = time_ms + schedule_offset + context;
-	case EVENT_SIGNLE_IMMEDIATE:
-		events[i].schedule_time = time_ms;
+		events[idx].schedule_time = time_ms + schedule_offset + events[idx].context;
+	case EVENT_SINGLE_IMMEDIATE:
+		events[idx].schedule_time = time_ms + events[idx].context;
 	case EVENT_DELTA:
-		events[i].schedule_time = time_ms + schedule_offset;
+		events[idx].schedule_time = time_ms + schedule_offset;
 	case EVENT_DELTA_IMMEDIATE:
-		events[i].schedule_time = time_ms;
+		events[idx].schedule_time = time_ms;
 	case EVENT_N_REPEAT:
-		events[i].schedule_time = time_ms + schedule_offset;
+		events[idx].schedule_time = time_ms + schedule_offset;
 	case EVENT_N_REPEAT_IMMEDIATE:
-		events[i].schedule_time = time_ms;
+		events[idx].schedule_time = time_ms;
 	default:
 		return EVENT_GENERIC_ERROR;
 	}
@@ -100,7 +100,7 @@ void eventRunner(void) {
 				events[i].schedule_time = time_ms + events[i].context;
 				break;
 
-			case EVENT_N_REPEAT_IMMEDIATE:
+			case EVENT_N_REPEAT_IMMEDIATE: {
 				events[i].flag = EVENT_N_REPEAT;
 
 				uint8_t n = (events[i].context & 0xFF00) >> 8;
@@ -113,8 +113,9 @@ void eventRunner(void) {
 
 				events[i].schedule_time = time_ms + events[i].context;
 				break;
+			}
 
-			case EVENT_N_REPEAT:
+			case EVENT_N_REPEAT: {
 				uint8_t n = (events[i].context & 0xFF00) >> 8;
 				if (n > 1) {
 					events[i].context = ((n - 1) << 8) | (events[i].context & 0x00FF);
@@ -125,6 +126,7 @@ void eventRunner(void) {
 
 				events[i].schedule_time = time_ms + events[i].context;
 				break;
+			}
 
 			default:
 				eventRemove(i);

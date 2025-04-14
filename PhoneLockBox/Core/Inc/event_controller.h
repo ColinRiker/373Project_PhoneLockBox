@@ -28,16 +28,18 @@ typedef enum {
 typedef enum {
 	EVENT_EMPTY,
 	EVENT_NFC_START_READ,
+	EVENT_NFC_POLL,
 	EVENT_NFC_READ,
 	EVENT_ROTARY_ENCODER,
 	EVENT_AUDIO,
-	EVENT_TIMER
+	EVENT_TIMER,
+	EVENT_ACCELEROMETER,
 } EventLabel;
 
 typedef enum {
 	EVENT_DISABLED,
 	EVENT_SINGLE,
-	EVENT_SIGNLE_IMMEDIATE,
+	EVENT_SINGLE_IMMEDIATE,
 	EVENT_DELTA,
 	EVENT_DELTA_IMMEDIATE,
 	EVENT_N_REPEAT,
@@ -58,17 +60,18 @@ typedef struct {
 	uint16_t context;
 } Event;
 
-uint16_t eventContextFormat()
-EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, uint16_t period);
+uint16_t eventContextFormat();
+EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, uint16_t delta, uint8_t n_runs);
 EventReturnCode eventClear();
 EventReturnCode eventControllerInit(void);
 EventReturnCode eventSchedule(uint8_t idx);
 EventReturnCode eventRemove(uint8_t idx);
 void eventRunner(void);
 void eventDefaultCallback(void);
+void eventTimerCallback(void);
 
 //Debug Functions
-void eventLabelToStr(char* buffer);
-void eventFlagToStr(char* buffer);
+//void eventLabelToStr(char* buffer);
+//void eventFlagToStr(char* buffer);
 
 #endif /*EVENT_CONTROLLER*/

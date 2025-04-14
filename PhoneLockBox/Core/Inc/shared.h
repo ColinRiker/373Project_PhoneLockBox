@@ -16,6 +16,7 @@
 #define DEBUG_NFC
 #define DEBUG_DISPLAY
 #define DEBUG_AUDIO
+#define DEBUG_ROTARY_ENCODER
 #endif /*END DEBUG DEFINES*/
 
 #include <string.h>
@@ -38,23 +39,23 @@ enum {
 	EMERGENCY_OPEN
 } typedef BoxMode;
 
-enum {
+typedef enum {
 	NO_INTERRUPT,
 	ENCODER_INTERRUPT,
 	MICROPHONE_INTERRUPT,
 	ENCODER_AND_MICROPHONE_INTERRUPT
-} typedef BoxInterruptFlag;
+} BoxInterruptFlag;
 
-struct {
+typedef struct {
 	BoxMode mode;
 	BoxInterruptFlag interrupt_flag;
-} typedef BoxState;
+} BoxState;
 
-struct {
+typedef struct {
 	int16_t x_componenet;
 	int16_t y_componenet;
 	int16_t z_componenet;
-} typedef Vector3D;
+} Vector3D;
 
 /* Global Variables */
 extern BoxState state;

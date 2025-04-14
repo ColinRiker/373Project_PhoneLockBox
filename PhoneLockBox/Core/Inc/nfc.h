@@ -14,4 +14,8 @@
 void nfcInit(void);
 bool nfcHasTarget(void);
 
+void nfcEventCallbackStart(void);
+void nfcEventCallbackPoll(void);
+void nfcEventCallbackRead(void);
+
 #endif /* INC_NFC_H_ */
