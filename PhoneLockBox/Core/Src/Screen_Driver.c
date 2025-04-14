@@ -3,7 +3,16 @@
 #include "shared.h"
 #include "stm32l4xx_hal.h"
 #include <stdio.h>
+#include <math.h> // for atan2f and M_PI
+#include <stdbool.h>
+
 #define HSPI_INSTANCE &hspi1
+
+#define DEG_TO_RAD(angle) ((angle) * M_PI / 180.0f)
+#define DISPLAY_WIDTH 240
+#define DISPLAY_HEIGHT 320
+#define ILI9341_CMD_DISPLAY_OFF  0x28
+#define ILI9341_CMD_DISPLAY_ON   0x29
 
 extern SPI_HandleTypeDef hspi1;
 
@@ -459,6 +468,27 @@ void ILI9341_Draw_Vertical_Line(uint16_t X, uint16_t Y, uint16_t Height, uint16_
 //FILL THE ENTIRE SCREEN WITH SELECTED COLOUR (either #define-d ones or custom 16bit)
 /*Sets address (entire screen) and Sends Height*Width ammount of colour information to LCD*/
 
+
+
+void ILI9341_Draw_Lock(uint16_t X, uint16_t Y, uint16_t Size, uint16_t Colour,bool locked){
+	ILI9341_Draw_Rectangle(X,Y,Size , Size,  Colour);
+	if (locked){
+		ILI9341_Draw_RingSector_v2((X-1)+Size/2, Y, Size/2 - 2,  Size/2 ,0, 180, Colour);
+	}else{
+		ILI9341_Draw_RingSector_v2((X+3)-Size/2, Y, Size/2 - 2,  Size/2 ,0, 180, Colour);
+
+	}
+
+
+}
+
+
+
+
+
+
+
+
 void ILI9341_Draw_Char(char ch, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor)
 {
 	if ((ch < 31) || (ch > 127)) return;
@@ -517,6 +547,40 @@ void ILI9341_Draw_Text(const char* str, const uint8_t font[], uint16_t X, uint16
 		str++;
 	}
 }
+
+int get_text_width(const char* str, const uint8_t font[])
+{
+	int width = 0;
+	uint8_t charWidth;			/* Width of character */
+	uint8_t fOffset = font[0];	/* Offset of character */
+	uint8_t fWidth = font[1];	/* Width of font */
+
+	while (*str)
+	{
+
+		/* Check character width and calculate proper position */
+		uint8_t *tempChar = (uint8_t*)&font[((*str - 0x20) * fOffset) + 4];
+		charWidth = tempChar[0];
+
+		if(charWidth + 2 < fWidth)
+		{
+			/* If character width is smaller than font width */
+			width += (charWidth + 2);
+		}
+		else
+		{
+			width += fWidth;
+		}
+
+		str++;
+	}
+	return width;
+}
+
+int get_text_height(const uint8_t font[]){
+	return font[2];
+}
+
 /*Draws a full screen picture from flash. Image converted from RGB .jpeg/other to C array using online converter*/
 //USING CONVERTER: http://www.digole.com/tools/PicturetoC_Hex_converter.php
 //65K colour (2Bytes / Pixel)
@@ -768,6 +832,192 @@ void ILI9341_Draw_FilledRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, ui
 
 	ILI9341_Draw_Rectangle(X0True, Y0True, xLen, yLen, color);
 }
+
+void ILI9341_Draw_FilledCircle_Sector(uint16_t X, uint16_t Y, uint16_t radius, float angle_deg, uint16_t color)
+{
+    if (angle_deg > 360.0f) angle_deg = 360.0f;
+    if (angle_deg < 0.0f) angle_deg = 0.0f;
+
+    float angle_rad = angle_deg * (M_PI / 180.0f);
+    int r2 = radius * radius;
+
+    for (int y = -radius; y <= radius; y++) {
+        int x_start = -1;
+        for (int x = -radius; x <= radius; x++) {
+            int dx = x;
+            int dy = y;
+            int dist2 = dx * dx + dy * dy;
+
+            if (dist2 <= r2) {
+                float angle = atan2f((float)-dy, (float)dx); // Y axis flipped
+                if (angle < 0) angle += 2.0f * M_PI;
+
+                if (angle <= angle_rad) {
+                    if (x_start == -1) {
+                        x_start = x;
+                    }
+                } else {
+                    if (x_start != -1) {
+                        int x_end = x - 1;
+                        int len = x_end - x_start + 1;
+                        ILI9341_Set_Address(X + x_start, Y + y, X + x_end, Y + y);
+                        ILI9341_Draw_Colour_Burst(color, len);
+                        x_start = -1;
+                    }
+                }
+            } else {
+                if (x_start != -1) {
+                    int x_end = x - 1;
+                    int len = x_end - x_start + 1;
+                    ILI9341_Set_Address(X + x_start, Y + y, X + x_end, Y + y);
+                    ILI9341_Draw_Colour_Burst(color, len);
+                    x_start = -1;
+                }
+            }
+        }
+
+        // Final span if the row ends with a valid range
+        if (x_start != -1) {
+            int x_end = radius;
+            int len = x_end - x_start + 1;
+            ILI9341_Set_Address(X + x_start, Y + y, X + x_end, Y + y);
+            ILI9341_Draw_Colour_Burst(color, len);
+        }
+    }
+}
+
+//void ILI9341_Draw_RingSector(uint16_t X, uint16_t Y, uint16_t inner_radius, uint16_t outer_radius, float angle_deg, uint16_t color)
+//{
+//    if (angle_deg > 360.0f) angle_deg = 360.0f;
+//    if (angle_deg < 0.0f) angle_deg = 0.0f;
+//
+//    float angle_rad = angle_deg * (M_PI / 180.0f);
+//
+//    int outer_r2 = outer_radius * outer_radius;
+//    int inner_r2 = inner_radius * inner_radius;
+//
+//    // Scan through bounding box
+//    for (int y = -outer_radius; y <= outer_radius; y++) {
+//        int draw_started = 0;
+//        int x_start = 0;
+//        for (int x = -outer_radius; x <= outer_radius; x++) {
+//            int dx = x;
+//            int dy = y;
+//            int dist2 = dx * dx + dy * dy;
+//
+//            if (dist2 >= inner_r2 && dist2 <= outer_r2) {
+//                float angle = atan2f((float)-dy, (float)dx);
+//                if (angle < 0) angle += 2.0f * M_PI;
+//
+//                if (angle <= angle_rad) {
+//                    if (!draw_started) {
+//                        x_start = x;
+//                        draw_started = 1;
+//                    }
+//                } else {
+//                    if (draw_started) {
+//                        // Draw burst from x_start to x-1
+//                        int len = x - x_start;
+//                        ILI9341_Set_Address(X + x_start, Y + y, X + x - 1, Y + y);
+//                        ILI9341_Draw_Colour_Burst(color, len);
+//                        draw_started = 0;
+//                    }
+//                }
+//            } else {
+//                if (draw_started) {
+//                    int len = x - x_start;
+//                    ILI9341_Set_Address(X + x_start, Y + y, X + x - 1, Y + y);
+//                    ILI9341_Draw_Colour_Burst(color, len);
+//                    draw_started = 0;
+//                }
+//            }
+//        }
+//        if (draw_started) {
+//            int len = outer_radius * 2 + 1 - x_start;
+//            ILI9341_Set_Address(X + x_start, Y + y, X + outer_radius, Y + y);
+//            ILI9341_Draw_Colour_Burst(color, len);
+//        }
+//    }
+//}
+
+
+void ILI9341_Draw_RingSector(uint16_t X, uint16_t Y, uint16_t inner_radius, uint16_t outer_radius, float angle_deg, uint16_t color)
+{
+    if (angle_deg > 360.0f) angle_deg = 360.0f;
+    if (angle_deg < 0.0f) angle_deg = 0.0f;
+
+    float angle_rad = angle_deg * (M_PI / 180.0f);
+
+    for (int y = -outer_radius; y <= outer_radius; y++) {
+        for (int x = -outer_radius; x <= outer_radius; x++) {
+            int dist_sq = x * x + y * y;
+            if (dist_sq >= inner_radius * inner_radius && dist_sq <= outer_radius * outer_radius) {
+                float theta = atan2f((float)-y, (float)x); // y is negative because screen y grows downward
+                if (theta < 0) theta += 2.0f * M_PI;
+
+                if (theta <= angle_rad) {
+                    ILI9341_Draw_Pixel(X + x, Y + y, color);
+                }
+            }
+        }
+    }
+}
+
+void ILI9341_Draw_RingSector_v2(uint16_t X, uint16_t Y, uint16_t inner_radius, uint16_t outer_radius, float start_angle_deg, float end_angle_deg, uint16_t color)
+{
+    if (start_angle_deg < 0.0f) start_angle_deg = 0.0f;
+    if (end_angle_deg > 360.0f) end_angle_deg = 360.0f;
+    if (start_angle_deg > end_angle_deg) return; // invalid range
+
+    float start_rad = start_angle_deg * (M_PI / 180.0f);
+    float end_rad = end_angle_deg * (M_PI / 180.0f);
+
+    for (int y = -outer_radius; y <= outer_radius; y++) {
+        for (int x = -outer_radius; x <= outer_radius; x++) {
+            int dist_sq = x * x + y * y;
+            if (dist_sq >= inner_radius * inner_radius && dist_sq <= outer_radius * outer_radius) {
+                float theta = atan2f((float)-y, (float)x);  // screen y grows downward
+                if (theta < 0) theta += 2.0f * M_PI;
+
+                if (theta >= start_rad && theta <= end_rad) {
+                    ILI9341_Draw_Pixel(X + x, Y + y, color);
+                }
+            }
+        }
+    }
+}
+
+
+
+void ILI9341_Draw_Phone(uint16_t X, uint16_t Y, uint16_t Size,bool detected){
+//	ILI9341_Draw_Rectangle(X,Y,Size , Size*1.5,  Colour);
+	if (detected){
+		ILI9341_Draw_HollowRectangleCoord(X,Y, X+Size, Y+Size*1.5, GREEN);
+		ILI9341_Draw_HollowCircle(X + Size/2, Y + Size * 1.5 - Size/4, Size/4, GREEN);
+
+
+	}else{
+		ILI9341_Draw_HollowRectangleCoord(X,Y, X+Size, Y+Size*1.5, RED);
+		ILI9341_Draw_HollowCircle(X + Size/2, Y + Size * 1.5 - Size/4, Size/4, RED);
+
+	}
+
+
+}
+
+
+void ILI9341_DisplayPower(bool on)
+{
+    if (on)
+    {
+    	ILI9341_Write_Command(ILI9341_CMD_DISPLAY_ON);
+    }
+    else
+    {
+    	ILI9341_Write_Command(ILI9341_CMD_DISPLAY_OFF);
+    }
+}
+
 //DRAW PIXEL AT XY POSITION WITH SELECTED COLOUR
 //
 //Location is dependant on screen orientation. x0 and y0 locations change with orientations.

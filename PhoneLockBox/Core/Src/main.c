@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdio.h>
-
+#include <stdbool.h>
 #include "audio.h"
 #include "Screen_Driver.h"
 #include "nfc.h"
@@ -60,7 +60,6 @@ TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
 
-
 /* USER CODE BEGIN PV */
 BoxState state;
 BoxState next_state;
@@ -81,8 +80,6 @@ static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
-
-
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
 
@@ -142,62 +139,80 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM2_Init();
   MX_TIM4_Init();
-
-
   /* USER CODE BEGIN 2 */
-	ILI9341_Init();//initial driver setup to drive ili9341
-	ILI9341_Fill_Screen(WHITE);
+  ILI9341_Init();//initial driver setup to drive ili9341
+  rotencInit();
 
-	accInit();
-	audioInit();
-	magInit();
-	rotencInit();
-	nfcInit();
-	TIM4->CCR4 = 90;
-	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
+  ILI9341_Fill_Screen(BACKG);
+
+  int w = (320 - get_text_width("Set Timer",FONT4))/2;
+  int w2 = (320 - get_text_width("Press to set time",FONT4))/2;
+
+  int rad = 80;
+  int rot_enc = TIM1->CNT;
+  float deg = 360 - (rot_enc/100.0)*360;
+
+  ILI9341_Draw_Text("Set Timer",FONT4, w, 0, WHITE, BACKG);
+  ILI9341_Draw_Text("Press to set time",FONT4, w2, 240-get_text_height(FONT4), WHITE, BACKG);
+
+  ILI9341_Draw_Lock(280,20,20,YELLOW,false);
+  ILI9341_Draw_Phone(10, 10, 20,false);
+  ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, deg, RED);
+
+  char hours[32];
+  snprintf(hours, sizeof(hours), "%d Hours", (rot_enc*15)/60);
+  char mins[32];
+  snprintf(mins, sizeof(mins), "%d Mins", (rot_enc*15)%60);
+  ILI9341_Draw_Text(hours, FONT4, (320 - get_text_width(hours,FONT4))/2, (240 - get_text_height(FONT4))/2, WHITE, BACKG);
+  ILI9341_Draw_Text(mins, FONT4, (320 - get_text_width(mins,FONT4))/2, (240 - get_text_height(FONT4))/2+get_text_height(FONT4), WHITE, BACKG);
+
+//  ILI9341_Draw_FilledCircle_Sector(320/2, 240/2,  rad, 360.0, RED);
+//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);
+
+
+  int prev_enc=  0;
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	while (1)
-	{
+  while (1)
+  {
     /* USER CODE END WHILE */
-		accCheck();
-		accRead();
-		magRead(&magnometer_state);
-
-		char acc_str[100];
-		char mag_str[100];
-		char enc_str[100];
-		char nfc_and_audio_str[100];
-
-		char audio_match = audioMatch() ? 'T' : 'F';
-		char has_nfc_target = nfcHasTarget() ? 'T' :'F';
-		char acc_moved = accHasMoved() ? 'T': 'F';
-		char mag_closed = magIsClosed() ? 'T':'F';
-
-		sprintf(acc_str, "Box Moved: %c",acc_moved );
-		sprintf(mag_str,"Lid Closed: %c", mag_closed);
-		sprintf(nfc_and_audio_str, "Tag Present: %c   Audio Match: %c", has_nfc_target, audio_match);
-		sprintf(enc_str, "%lu", TIM1->CNT);
-
-		ILI9341_Draw_Text("Acceleration:", FONT4,10,10,BLACK,WHITE);
-		ILI9341_Draw_Text(acc_str, FONT2,10,40,BLACK,WHITE);
-
-		ILI9341_Draw_Text("Magnet:", FONT4,10,70,BLACK,WHITE);
-		ILI9341_Draw_Text(mag_str, FONT2,10,100,BLACK,WHITE);
-
-		ILI9341_Draw_Text("Encoder:", FONT4,10,130,BLACK,WHITE);
-		ILI9341_Draw_Text(enc_str, FONT4,10,160,BLACK,WHITE);
-
-		ILI9341_Draw_Text("NFC and Audio Match:", FONT4,10,190,BLACK,WHITE);
-		ILI9341_Draw_Text(nfc_and_audio_str, FONT2,10,210,BLACK,WHITE);
-
 
     /* USER CODE BEGIN 3 */
+	  if (prev_enc != TIM1->CNT){
 
-	}
+		  int rot_enc = TIM1->CNT;
+
+		  float deg = 360 - (rot_enc/100.0)*360;
+		  ILI9341_Draw_Rectangle(320/2 - rad, 240/2 - rad, 2*rad, 2*rad, BACKG);
+//		  ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, 360.0, BACKG);
+
+		  ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, deg, RED);
+
+
+		  char hours[32];
+		  snprintf(hours, sizeof(hours), "%d Hours", (rot_enc*15)/60);
+		  char mins[32];
+		  snprintf(mins, sizeof(mins), "%d Mins", (rot_enc*15)%60);
+
+		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_10);
+
+
+
+
+//		  ILI9341_Draw_Text(buffer, FONT4, (320 - get_text_width(buffer,FONT4))/2, (240 - get_text_height(FONT4))/2, WHITE, BACKG);
+		  ILI9341_Draw_Text(hours, FONT4, (320 - get_text_width(hours,FONT4))/2, (240 - get_text_height(FONT4))/2, WHITE, BACKG);
+		  ILI9341_Draw_Text(mins, FONT4, (320 - get_text_width(mins,FONT4))/2, (240 - get_text_height(FONT4))/2+get_text_height(FONT4), WHITE, BACKG);
+
+//		  ILI9341_DisplayPower(false);
+
+
+	  }
+	  prev_enc = TIM1->CNT;
+
+  }
   /* USER CODE END 3 */
 }
 
@@ -540,6 +555,7 @@ static void MX_TIM2_Init(void)
   /* USER CODE END TIM2_Init 2 */
 
 }
+
 /**
   * @brief TIM4 Initialization Function
   * @param None
@@ -559,9 +575,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 1200;
+  htim4.Init.Prescaler = 0;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 100;
+  htim4.Init.Period = 65535;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -589,7 +605,6 @@ static void MX_TIM4_Init(void)
 
 }
 
-
 /**
   * @brief GPIO Initialization Function
   * @param None
@@ -613,10 +628,10 @@ static void MX_GPIO_Init(void)
   HAL_PWREx_EnableVddIO2();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, PN532_RST_Pin|PN532_REQ_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10|ILI9341_CS_Pin|ILI9341_RESET_Pin|ILI9341_DC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, ILI9341_CS_Pin|ILI9341_RESET_Pin|ILI9341_DC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, PN532_RST_Pin|PN532_REQ_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PE2 PE3 */
   GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
@@ -654,6 +669,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PB10 ILI9341_CS_Pin ILI9341_RESET_Pin ILI9341_DC_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_10|ILI9341_CS_Pin|ILI9341_RESET_Pin|ILI9341_DC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /*Configure GPIO pins : PB12 PB13 PB15 */
   GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -676,14 +698,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF7_USART3;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PD14 PD15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PC6 */
@@ -746,21 +760,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : ILI9341_CS_Pin ILI9341_RESET_Pin ILI9341_DC_Pin */
-  GPIO_InitStruct.Pin = ILI9341_CS_Pin|ILI9341_RESET_Pin|ILI9341_DC_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PE0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
