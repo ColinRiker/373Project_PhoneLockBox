@@ -51,6 +51,63 @@ bool stateInsertFlag(SFlag flag) {
 
 }
 
+void clearFlags() {
+	for (uint8_t i = 0; i < MAX_FLAGS; ++i) {
+			flags[i] = SFLAG_NULL;
+		}
+}
+
+void inturruptControl(BoxState ourState) {
+
+	switch(ourState) {
+	//all states that need to have button DISABLED
+	case UNLOCKED_ASLEEP_TO_AWAKE:
+	case UNLOCKED_FULL_AWAKE_FUNC_A:
+	case LOCKED_FULL_AWAKE:
+	case LOCKED_MONITOR_AWAKE:
+	case LOCKED_MONITOR_ASLEEP:
+	case EMERGENCY_OPEN:
+		//func to DISABLE button interrupt
+
+		break;
+	//all states that need to have button ENABLED
+	case UNLOCKED_EMPTY_ASLEEP:
+	case UNLOCKED_EMPTY_AWAKE:
+	case UNLOCKED_FULL_ASLEEP:
+	case UNLOCKED_FULL_AWAKE_FUNC_B:
+	case UNLOCKED_TO_LOCKED_AWAKE:
+	case LOCKED_FULL_NOTIFICATION_FUNC_A:
+	case LOCKED_FULL_NOTIFICATION_FUNC_B:
+	case LOCKED_FULL_ASLEEP:
+		//func to ENABLE button interrupt
+
+		break;
+	//all states that need to have audio DISABLED
+	case UNLOCKED_EMPTY_ASLEEP:
+	case UNLOCKED_ASLEEP_TO_AWAKE:
+	case UNLOCKED_EMPTY_AWAKE:
+	case UNLOCKED_FULL_AWAKE_FUNC_A:
+	case UNLOCKED_FULL_AWAKE_FUNC_B:
+	case UNLOCKED_FULL_ASLEEP:
+	case UNLOCKED_TO_LOCKED_AWAKE:
+	case LOCKED_FULL_NOTIFICATION_FUNC_A:
+	case LOCKED_FULL_NOTIFICATION_FUNC_B:
+	case EMERGENCY_OPEN:
+		//func to DISABLE audio interrupt
+
+		break;
+	//all states that need to have audio ENABLED
+	case LOCKED_MONITOR_AWAKE:
+	case LOCKED_FULL_ASLEEP:
+	case LOCKED_FULL_AWAKE:
+	case LOCKED_MONITOR_ASLEEP:
+		//func to DISABLE audio interrupt
+
+		break;
+
+ }
+}
+
 
 void stateMachineInit(void) {
 	state.mode = UNLOCKED_EMPTY_ASLEEP;
@@ -94,8 +151,12 @@ BoxMode runStateMachine(void) {
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
+		//if we take out phone at ANY point, we gotta go back to UNLCOKED_EMPTY_AWAKE
+		if(hasFlag()) {
+			next=UNLOCKED_EMPTY_AWAKE;
+		}
 		// PRIORITIZE MOVING TO AWAKE FUNC B
-		if (hasFlag(SFLAG_ROTENC_ROTATED)) {
+		else if (hasFlag(SFLAG_ROTENC_ROTATED)) {
 			next=UNLOCKED_FULL_AWAKE_FUNC_B;
 		} //if we can't move to that, we move back to sleep
 		else if(hasFlag(SFLAG_TIMER_COMPLETE)) {
@@ -110,7 +171,7 @@ BoxMode runStateMachine(void) {
 		else if(hasFlag(SFLAG_ROTENC_ROTATED)) {
 			next=UNLOCKED_FULL_AWAKE_FUNC_A;
 		}  //next, move back to unlocked and empty but awake
-		else if(!hasFlag(SFLAG_NFC_PHONE_PRESENT)) {
+		else if(hasFlag(SFLAG_NFC_PHONE_NOT_PRESENT)) {
 			next=UNLOCKED_EMPTY_AWAKE;
 		} //finally, we last move back to sleep
 		else if(hasFlag(SFLAG_TIMER_COMPLETE)) {
@@ -119,7 +180,7 @@ BoxMode runStateMachine(void) {
 		break;
 	case UNLOCKED_FULL_ASLEEP:
 		// PRIORITIZE MOVING BACK TO EMPTY IF PHONE IS EVER TAKEN OUT
-		if (!hasFlag(SFLAG_NFC_PHONE_PRESENT)) {
+		if (hasFlag(SFLAG_NFC_PHONE_NOT_PRESENT)) {
 			next=UNLOCKED_EMPTY_AWAKE;
 		}// if not, wake back up if possible
 		else if(hasFlag(SFLAG_ACC_BOX_MOVED) || hasFlag(SFLAG_ROTENC_ROTATED) || hasFlag(SFLAG_ROTENC_INTERRUPT)) {
@@ -129,7 +190,7 @@ BoxMode runStateMachine(void) {
 	case UNLOCKED_TO_LOCKED_AWAKE:
 		// if the button is pressed OR there is NO phone at any point OR box is opened
 		// prioritize this
-		if((!hasFlag(SFLAG_NFC_PHONE_PRESENT)) || !hasFlag(SFLAG_BOX_CLOSED) || hasFlag(SFLAG_ROTENC_INTERRUPT)) {
+		if((hasFlag(SFLAG_NFC_PHONE_NOT_PRESENT)) || hasFlag(SFLAG_BOX_OPEN) || hasFlag(SFLAG_ROTENC_INTERRUPT)) {
 			next = UNLOCKED_FULL_AWAKE_FUNC_B;
 		} // if it has been 5 seconds in this state
 		else if(hasFlag(SFLAG_TIMER_COMPLETE)) {
@@ -139,7 +200,7 @@ BoxMode runStateMachine(void) {
 
 	case LOCKED_FULL_AWAKE:
 		//if at any point phone not in box, enter emergency state
-		if(!hasFlag(SFLAG_BOX_CLOSED)) {
+		if(hasFlag(SFLAG_BOX_OPEN)) {
 			next = EMERGENCY_OPEN;
 		}
 		//sleep if timer hits 1 min
@@ -156,7 +217,7 @@ BoxMode runStateMachine(void) {
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
 		//if at any point phone not in box, enter emergency state
-		if(!hasFlag(SFLAG_BOX_CLOSED)) {
+		if(hasFlag(SFLAG_BOX_OPEN)) {
 			next = EMERGENCY_OPEN;
 		}
 		//if we hold button in this state, unlock
@@ -172,7 +233,7 @@ BoxMode runStateMachine(void) {
 		break;
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
 		//if at any point phone not in box, enter emergency state
-		if(!hasFlag(SFLAG_BOX_CLOSED)) {
+		if(hasFlag(SFLAG_BOX_OPEN)) {
 			next = EMERGENCY_OPEN;
 		}
 		//
@@ -185,7 +246,7 @@ BoxMode runStateMachine(void) {
 		break;
 	case LOCKED_FULL_ASLEEP:
 		//if at any point phone not in box, enter emergency state
-		if(!hasFlag(SFLAG_BOX_CLOSED)) {
+		if(hasFlag(SFLAG_BOX_OPEN)) {
 			next = EMERGENCY_OPEN;
 		}
 		//if volume is high, we do not wake up monitor but we do listen to sound
@@ -199,7 +260,7 @@ BoxMode runStateMachine(void) {
 		break;
 	case LOCKED_MONITOR_AWAKE:
 		//if at any point phone not in box, enter emergency state
-		if(!hasFlag(SFLAG_BOX_CLOSED)) {
+		if(hasFlag(SFLAG_BOX_OPEN)) {
 			next = EMERGENCY_OPEN;
 		}
 		//if there is a match, we move to prompt user if they want to unlock
@@ -212,7 +273,7 @@ BoxMode runStateMachine(void) {
 		break;
 	case LOCKED_MONITOR_ASLEEP:
 		//if at any point phone not in box, enter emergency state
-		if(!hasFlag(SFLAG_BOX_CLOSED)) {
+		if(hasFlag(SFLAG_BOX_OPEN)) {
 			next = EMERGENCY_OPEN;
 		}
 		//if there is an audio match, prompt user
@@ -240,7 +301,9 @@ BoxMode runStateMachine(void) {
 
 	// update state if changed
 	if (next != curr) {
-		eventClear();eeeeeeeeeeeeeee
+		eventClear();
+		clearFlags();
+		inturruptControl(next);
 		printf("transition: %d → %d\n", curr, next);
 		state.mode = next;
 		next_state.mode = next;
