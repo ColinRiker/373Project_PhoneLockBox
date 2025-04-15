@@ -328,6 +328,7 @@ void stateScheduleEvents(BoxMode mode) {
 
 	case UNLOCKED_EMPTY_ASLEEP:
 		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
@@ -336,21 +337,26 @@ void stateScheduleEvents(BoxMode mode) {
 		break;
 
 	case UNLOCKED_EMPTY_AWAKE:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 1, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_B:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_FULL_ASLEEP:
+		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
@@ -359,43 +365,45 @@ void stateScheduleEvents(BoxMode mode) {
 		break;
 
 	case LOCKED_FULL_AWAKE:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_FULL_ASLEEP:
+		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_MONITOR_AWAKE:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		eventRegister(audioEventCallback, EVENT_AUDIO, EVENT_DELTA, 1, 0);
-
 		break;
 
 	case LOCKED_MONITOR_ASLEEP:
+		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		eventRegister(audioEventCallback, EVENT_AUDIO, EVENT_DELTA, 1, 0);
 		break;
-
 
 	default:
 		break;
 	}
 }
+
 

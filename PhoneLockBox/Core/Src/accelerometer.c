@@ -9,10 +9,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
-
+#include <stdlib.h>
 #include "accelerometer.h"
 #include "stm32l4xx_hal.h"
 #include "shared.h"
+#include "state_machine.h"
 
 extern I2C_HandleTypeDef hi2c1;
 
@@ -59,6 +60,13 @@ bool accHasMoved() {
 	return VectorDelta(&accelerometer_state, &prev_accelerometer_state) >= ACCELERATION_WAKE_DELTA;
 }
 
+void accDeltaEvent(void) {
+	accRead();  // updates current_state and last_state
+	if (accHasMoved()) {
+		stateInsertFlag(SFLAG_ACC_BOX_MOVED);
+	}
+}
+
 void magInit(){
 	magnometer_state.x_componenet = 0;
 	magnometer_state.y_componenet = 0;
@@ -72,7 +80,6 @@ void magInit(){
 
 
 void magRead(Vector3D* vec){
-
 	uint8_t buf[10]= {MAG_FIRST_ADDR | (1 << 7)};
 	HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 1, 1000);
 
@@ -85,6 +92,25 @@ void magRead(Vector3D* vec){
 	vec->z_componenet = (out_buf_8[5] << 8) | out_buf_8[4];
 }
 
-void magIsClosed(void) {
+bool magIsClosed(void) {
+    Vector3D vec;
+    magRead(&vec);  // gets raw x/y/z magnetometer values
 
+    int magnitude = abs(vec.x_componenet) + abs(vec.y_componenet) + abs(vec.z_componenet);
+
+    return (magnitude > 5000);  // adjust threshold based on magnet
+}
+
+
+void magBoxStatusEvent(void) {
+	Vector3D vec;
+	magRead(&vec);
+
+	int magnitude = abs(vec.x_componenet) + abs(vec.y_componenet) + abs(vec.z_componenet);
+
+	if (magnitude > 5000) {  // not sure what this value needs to be
+		stateInsertFlag(SFLAG_BOX_CLOSED);
+	} else {
+		stateInsertFlag(SFLAG_BOX_OPEN);
+	}
 }
