@@ -52,11 +52,13 @@ bool rotencHasMoved(void) {
 void rotencDeltaEvent(void) {
 	uint8_t empty_idx = MAX_FLAGS;
 
+	if (!rotencHasMoved()) return;
+
 	for (uint8_t i = 0; i < MAX_FLAGS; ++i) {
 		if (flags[i] == SFLAG_NULL && empty_idx == MAX_FLAGS) {
 			if (flags[i] == SFLAG_ROTENC_ROTATED) {
 
-#ifdef DEBUG_ROTARY_ENCODER || DEBUG_EVENT_CONTROLLER
+#if defined(DEBUG_ROTARY_ENCODER) || defined(DEBUG_EVENT_CONTROLLER)
 				printf("[INFO] ROTENC_ROTATED Flag already set\n\r");
 #endif
 				return;
@@ -68,7 +70,7 @@ void rotencDeltaEvent(void) {
 
 	flags[empty_idx] = SFLAG_ROTENC_ROTATED;
 
-#ifdef DEBUG_ROTARY_ENCODER || DEBUG_EVENT_CONTROLLER
+#if defined(DEBUG_ROTARY_ENCODER) || defined(DEBUG_EVENT_CONTROLLER)
 	printf("[INFO] ROTENC_ROTATED Flag set\n\r");
 #endif
 

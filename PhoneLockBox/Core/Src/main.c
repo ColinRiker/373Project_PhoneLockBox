@@ -27,6 +27,7 @@
 
 #include "audio.h"
 #include "Screen_Driver.h"
+#include "state_machine.h"
 #include "nfc.h"
 #include "accelerometer.h"
 #include "rotary_encoder.h"
@@ -65,6 +66,8 @@ BoxState next_state;
 PN532 pn532;
 
 extern uint32_t time_ms;
+extern uint8_t audio_count;
+extern SFlag flags[MAX_FLAGS];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,12 +87,12 @@ static void MX_TIM3_Init(void);
 /* USER CODE BEGIN 0 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
-		audioCount();
+		++audio_count;
 #ifdef DEBUG_AUDIO
 		printf("EXTI 0 Interrupt Triggered from KY-037 D0!\n");
 #endif /* DEBUG_AUDIO */
 	} else if (GPIO_Pin == GPIO_PIN_10) {
-		printf("EXTI 10 Interrupt Triggered from PEC-11 SW!\n");
+		stateInsertFlag(SFLAG_ROTENC_INTERRUPT);
 	}
 }
 

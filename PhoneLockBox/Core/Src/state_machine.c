@@ -1,18 +1,20 @@
 /*
- *
- *
+ * State Machine
+ * Handles the various transitions and functions of the box
  *
  * */
 
 #include "state_machine.h"
-#include "shared.h"
-#include "rotary_encoder.h"
-#include "accelerometer.h"
-#include "event_controller.h"
-#include "nfc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "accelerometer.h"
+#include "audio.h"
+#include "event_controller.h"
+#include "nfc.h"
+#include "rotary_encoder.h"
+#include "shared.h"
 
 #define MINUTE 60000
 
@@ -105,7 +107,7 @@ BoxMode runStateMachine(void) {
 	case UNLOCKED_TO_LOCKED_AWAKE:
 		// if the button is pressed OR there is NO phone at any point OR box is opened
 		// prioritize this
-		if((!hasFlag(SFLAG_NFC_PHONE_PRESENT)) || hasFlag(SFLAG_BOX_OPEN) || hasFlag(SFLAG_ROTENC_INTERRUPT)) {
+		if((!hasFlag(SFLAG_NFC_PHONE_PRESENT)) || !hasFlag(SFLAG_BOX_CLOSED) || hasFlag(SFLAG_ROTENC_INTERRUPT)) {
 			next = UNLOCKED_FULL_AWAKE_FUNC_B;
 		} // if it has been 5 seconds in this state
 		else if(hasFlag(SFLAG_TIMER_COMPLETE)) {
@@ -115,7 +117,7 @@ BoxMode runStateMachine(void) {
 
 	case LOCKED_FULL_AWAKE:
 		//if at any point phone not in box, enter emergency state
-		if(hasFlag(SFLAG_BOX_OPEN)) {
+		if(!hasFlag(SFLAG_BOX_CLOSED)) {
 			next = EMERGENCY_OPEN;
 		}
 		//sleep if timer hits 1 min
@@ -132,7 +134,7 @@ BoxMode runStateMachine(void) {
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
 		//if at any point phone not in box, enter emergency state
-		if(hasFlag(SFLAG_BOX_OPEN)) {
+		if(!hasFlag(SFLAG_BOX_CLOSED)) {
 			next = EMERGENCY_OPEN;
 		}
 		//if we hold button in this state, unlock
@@ -148,7 +150,7 @@ BoxMode runStateMachine(void) {
 		break;
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
 		//if at any point phone not in box, enter emergency state
-		if(hasFlag(SFLAG_BOX_OPEN)) {
+		if(!hasFlag(SFLAG_BOX_CLOSED)) {
 			next = EMERGENCY_OPEN;
 		}
 		//
@@ -161,7 +163,7 @@ BoxMode runStateMachine(void) {
 		break;
 	case LOCKED_FULL_ASLEEP:
 		//if at any point phone not in box, enter emergency state
-		if(hasFlag(SFLAG_BOX_OPEN)) {
+		if(!hasFlag(SFLAG_BOX_CLOSED)) {
 			next = EMERGENCY_OPEN;
 		}
 		//if volume is high, we do not wake up monitor but we do listen to sound
@@ -175,7 +177,7 @@ BoxMode runStateMachine(void) {
 		break;
 	case LOCKED_MONITOR_AWAKE:
 		//if at any point phone not in box, enter emergency state
-		if(hasFlag(SFLAG_BOX_OPEN)) {
+		if(!hasFlag(SFLAG_BOX_CLOSED)) {
 			next = EMERGENCY_OPEN;
 		}
 		//if there is a match, we move to prompt user if they want to unlock
@@ -188,7 +190,7 @@ BoxMode runStateMachine(void) {
 		break;
 	case LOCKED_MONITOR_ASLEEP:
 		//if at any point phone not in box, enter emergency state
-		if(hasFlag(SFLAG_BOX_OPEN)) {
+		if(!hasFlag(SFLAG_BOX_CLOSED)) {
 			next = EMERGENCY_OPEN;
 		}
 		//if there is an audio match, prompt user
@@ -217,7 +219,28 @@ BoxMode runStateMachine(void) {
 		printf("transition: %d → %d\n", curr, next);
 		state.mode = next;
 		next_state.mode = next;
+		stateScheduleEvents(next);
 	}
+
+}
+
+bool stateInsertFlag(SFlag flag) {
+	uint8_t empty_idx = MAX_FLAGS;
+	for(uint8_t i = 0; i < MAX_FLAGS; ++i) {
+		if (flags[i] == flag) {
+
+			return false;
+		} else if (flags[i] == SFLAG_NULL && i < empty_idx) {
+			empty_idx = i;
+		}
+	}
+
+	if (empty_idx < MAX_FLAGS) {
+		flags[empty_idx] = flag;
+		return true;
+	}
+
+	return false;
 
 }
 
@@ -240,43 +263,55 @@ void stateScheduleEvents(BoxMode mode) {
 
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-		eventRegister();
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_B:
-		eventRegister();
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_FULL_ASLEEP:
-		eventRegister();
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_TO_LOCKED_AWAKE:
-		eventRegister();
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, 5000, 0);
 		break;
 
 	case LOCKED_FULL_AWAKE:
-		eventRegister();
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
+
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
-		eventRegister();
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
+
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
-		eventRegister();
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
+
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_FULL_ASLEEP:
-		eventRegister();
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_MONITOR_AWAKE:
-		eventRegister();
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
+
+		eventRegister(audioEventCallback, EVENT_AUDIO, EVENT_DELTA, 1, 0);
+
 		break;
 
 	case LOCKED_MONITOR_ASLEEP:
-		eventRegister();
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
+
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
+		eventRegister(audioEventCallback, EVENT_AUDIO, EVENT_DELTA, 1, 0);
 		break;
 
 

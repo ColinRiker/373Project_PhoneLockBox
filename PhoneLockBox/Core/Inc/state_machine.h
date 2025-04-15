@@ -9,6 +9,7 @@
 #ifndef INC_STATE_MACHINE_H_
 #define INC_STATE_MACHINE_H_
 
+#include <stdbool.h>
 
 #define MAX_FLAGS 8
 
@@ -22,18 +23,16 @@ typedef enum {
 	SFLAG_TIMER_COMPLETE,
 	SFLAG_NFC_PHONE_PRESENT,
 
-	SFLAG_BOX_OPEN,
 	SFLAG_BOX_CLOSED,
 	SFLAG_AUDIO_VOL_HIGH, //is audio volume high
-	SFLAG_AUDIO_MATCH //is there an audio match
+	SFLAG_AUDIO_MATCH, //is there an audio match
+	SFLAG_AUDIO_NO_MATCH
 } SFlag;
 
 
-BoxMode runStateMachine(void);
 void stateMachineInit(void);
-//THESE NEED TO BE MOVED EVENTUALLY
-BoxMode timerResolve(void);
-BoxMode NFCResolve(void);
+BoxMode runStateMachine(void);
+bool stateInsertFlag(SFlag flag);
 void stateScheduleEvents(BoxMode mode);
 void stateTimerCallback(void);
 

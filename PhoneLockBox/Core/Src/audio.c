@@ -12,9 +12,13 @@
 #include <stdbool.h>
 
 #include "shared.h"
+#include "state_machine.h"
+#include "event_controller.h"
 #include "stm32l4xx_hal.h"
 
 extern TIM_HandleTypeDef htim2;
+extern uint32_t time_ms;
+extern SFlag flags[MAX_FLAGS];
 
 uint32_t matrix[MAX_ENTRIES] = {0};
 uint8_t audio_count;
@@ -26,32 +30,6 @@ void audioInit(void) {
 	last_interrupt_time = 0;
 }
 
-void audioCount(void) {
-	uint32_t now = __HAL_TIM_GET_COUNTER(&htim2);
-	uint32_t delta;
-
-	if(now >= last_interrupt_time){
-		delta = now - last_interrupt_time;
-	}
-	else{
-		delta = (2000000 - last_interrupt_time) + now;
-	}
-
-	last_interrupt_time = now;
-	++audio_count;
-
-	if (audio_count < MAX_ENTRIES) {
-		matrix[audio_count] = delta;
-	}
-#ifdef DEBUG_AUDIO
-	printf("Interrupt #%lu triggered at %lu µs \n", audio_count, now);
-#endif /* END DEBUG_AUDIO */
-
-	if(audio_count == MAX_ENTRIES){
-		//Set Flag so scheduler/state machine/event whatever calls audioMatch;
-	}
-
-}
 
 bool audioMatch(void) {
 	uint32_t sum_deltas = 0;
@@ -81,5 +59,37 @@ bool audioMatch(void) {
 	}
 
 	return (time_total <= TIME_MAX_THRESH) && (time_total >= TIME_MIN_THRESH);
+}
+
+
+void audioEventCallback(void) {
+	uint32_t now = time_ms;
+	uint32_t delta;
+
+	if(now >= last_interrupt_time){
+		delta = now - last_interrupt_time;
+	}
+	else{
+		delta = (2000000 - last_interrupt_time) + now;
+	}
+
+	last_interrupt_time = now;
+	++audio_count;
+
+	if (audio_count < MAX_ENTRIES) {
+		matrix[audio_count] = delta;
+	}
+#ifdef DEBUG_AUDIO
+	printf("Interrupt #%d triggered at %ld µs \n", audio_count, now);
+#endif /* END DEBUG_AUDIO */
+
+	if(audio_count == MAX_ENTRIES){
+		if (audioMatch()){
+			stateInsertFlag(SFLAG_AUDIO_MATCH);
+		} else {
+			stateInsertFlag(SFLAG_AUDIO_NO_MATCH);
+		}
+	}
+
 }
 
