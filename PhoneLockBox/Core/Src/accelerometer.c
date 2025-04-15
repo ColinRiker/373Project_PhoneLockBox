@@ -14,6 +14,8 @@
 #include "stm32l4xx_hal.h"
 #include "shared.h"
 
+extern I2C_HandleTypeDef hi2c1;
+
 Vector3D accelerometer_state;
 Vector3D prev_accelerometer_state;
 Vector3D magnometer_state;
