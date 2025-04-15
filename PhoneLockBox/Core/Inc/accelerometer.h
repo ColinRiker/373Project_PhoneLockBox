@@ -15,6 +15,7 @@
 #include "shared.h"
 
 #define ACCELERATION_WAKE_DELTA 1000
+#define MAGNOMETER_THRESHOLD
 
 #define SAD_W_M 0x3C
 #define SAD_R_M 0x3D
@@ -31,22 +32,13 @@
 
 #define IRA_REG_M 0x0A
 
-extern BoxState state;
-extern BoxState next_state;
-extern I2C_HandleTypeDef hi2c1;
-extern Vector3D accelerometer_state;
-extern Vector3D prev_accelerometer_state;
-extern Vector3D magnometer_state;
-extern Vector3D prev_magnometer_state;
-
 void accInit(void);
 void accRead(void);
-bool accHasMoved(void);
 void accDeltaEvent(void);
 void accCheck(void);
 
 void magInit(void);
 void magRead(Vector3D* vec);
-BoxMode magResolve(void);
+void magBoxStatusEvent(void);
 
 #endif /* INC_ACCELEROMETER_H_ */

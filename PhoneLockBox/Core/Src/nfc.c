@@ -50,7 +50,6 @@ bool nfcHasTarget(void) {
 		printf("\r\n");
 		return true;
 	}
-
 }
 
 void nfcEventCallbackStart(void) {
@@ -81,7 +80,23 @@ void nfcEventCallbackPoll(void) {
 void nfcEventCallbackRead(void) {
 	uint8_t buff[MIFARE_UID_MAX_LENGTH] = {0};
 
-	PN532_ReadFrame(&pn532, buff, 4);
+	uint32_t frame_length = PN532_ReadFrame(&pn532, buff, 4);
+
+	if (! ((buff[0] == PN532_PN532TOHOST) && (buff[1] == (PN532_COMMAND_INLISTPASSIVETARGET + 1)))){
+		//ERROR STATE
+		//Restart?
+	}
+
+	if (frame_length - 2 >= 0) {
+		//removeFlag();
+		insertFlag(SFLAG_NFC_PHONE_PRESENT);
+	} else {
+		//removeFlag(SFLAG_NFC_PHONE_PRESENT);
+		insertFlag(SFLAG_NFC_PHONE_NOT_PRESENT);
+	}
+
+	//We keep scheduling the start even incase the phone becomes present or is no longer present
+	eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 1, 0);
 }
 
 

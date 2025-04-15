@@ -34,6 +34,7 @@ EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, 
 	return EVENT_QUEUE_FULL;
 }
 
+
 EventReturnCode eventClear(void) {
 	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
 		events[i].callback = eventDefaultCallback;
@@ -134,6 +135,10 @@ void eventRunner(void) {
 		}
 	}
 
+}
+
+void eventTimerCallback(void) {
+	stateInsertFlag(SFLAG_TIMER_COMPLETE);
 }
 
 void eventDefaultCallback(void) {

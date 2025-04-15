@@ -29,11 +29,11 @@ typedef enum {
 	SFLAG_AUDIO_NO_MATCH
 } SFlag;
 
+bool stateHasFlag(SFlag flag);
+bool stateInsertFlag(SFlag flag);
 
 void stateMachineInit(void);
 BoxMode runStateMachine(void);
-bool stateInsertFlag(SFlag flag);
 void stateScheduleEvents(BoxMode mode);
-void stateTimerCallback(void);
 
 #endif

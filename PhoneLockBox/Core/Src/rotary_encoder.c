@@ -44,34 +44,9 @@ uint32_t rotencGetDelta(void) {
 	return 0;
 }
 
-bool rotencHasMoved(void) {
-	return (bool) rotencGetDelta();
-}
-
 
 void rotencDeltaEvent(void) {
-	uint8_t empty_idx = MAX_FLAGS;
-
-	if (!rotencHasMoved()) return;
-
-	for (uint8_t i = 0; i < MAX_FLAGS; ++i) {
-		if (flags[i] == SFLAG_NULL && empty_idx == MAX_FLAGS) {
-			if (flags[i] == SFLAG_ROTENC_ROTATED) {
-
-#if defined(DEBUG_ROTARY_ENCODER) || defined(DEBUG_EVENT_CONTROLLER)
-				printf("[INFO] ROTENC_ROTATED Flag already set\n\r");
-#endif
-				return;
-			}
-
-			empty_idx = i;
-		}
+	if (rotencGetDelta() != 0) {
+		stateInsertFlag(SFLAG_ROTENC_ROTATED);
 	}
-
-	flags[empty_idx] = SFLAG_ROTENC_ROTATED;
-
-#if defined(DEBUG_ROTARY_ENCODER) || defined(DEBUG_EVENT_CONTROLLER)
-	printf("[INFO] ROTENC_ROTATED Flag set\n\r");
-#endif
-
 }

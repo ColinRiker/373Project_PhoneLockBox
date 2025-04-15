@@ -17,6 +17,7 @@
 #define DEBUG_DISPLAY
 #define DEBUG_AUDIO
 #define DEBUG_ROTARY_ENCODER
+#define DEBUG_STATE_CONTROLLER
 #endif /*END DEBUG DEFINES*/
 
 #include <string.h>

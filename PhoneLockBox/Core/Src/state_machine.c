@@ -23,18 +23,40 @@ SFlag flags[MAX_FLAGS];
 extern BoxState state;
 extern BoxState next_state;
 
+
+bool stateHasFlag(SFlag flag) {
+	for (uint8_t i = 0; i < MAX_FLAGS; ++i) {
+		if (flags[i] == flag) return true;
+	}
+	return false;
+}
+
+bool stateInsertFlag(SFlag flag) {
+	uint8_t empty_idx = MAX_FLAGS;
+	for(uint8_t i = 0; i < MAX_FLAGS; ++i) {
+		if (flags[i] == flag) {
+
+			return false;
+		} else if (flags[i] == SFLAG_NULL && i < empty_idx) {
+			empty_idx = i;
+		}
+	}
+
+	if (empty_idx < MAX_FLAGS) {
+		flags[empty_idx] = flag;
+		return true;
+	}
+
+	return false;
+
+}
+
+
 void stateMachineInit(void) {
 	state.mode = UNLOCKED_EMPTY_ASLEEP;
 	state.interrupt_flag = NO_INTERRUPT;
 
 	next_state = state;
-}
-
-bool hasFlag(SFlag flag) {
-	for (uint8_t i = 0; i < MAX_FLAGS; ++i) {
-		if (flags[i] == flag) return true;
-	}
-	return false;
 }
 
 BoxMode runStateMachine(void) {
@@ -208,14 +230,17 @@ BoxMode runStateMachine(void) {
 			next=UNLOCKED_FULL_AWAKE_FUNC_B;
 		}
 		break;
-	default: //should we have a default?? what would that be??
-		// fallback case
+	default:
+#ifdef DEBUG_STATE_CONTROLLER
+		printf("[ERROR] Default case of state machine reached, system in bad state\n\r");
+#endif
 		break;
 	}
 
+
 	// update state if changed
 	if (next != curr) {
-		eventClear();
+		eventClear();eeeeeeeeeeeeeee
 		printf("transition: %d → %d\n", curr, next);
 		state.mode = next;
 		next_state.mode = next;
@@ -224,25 +249,6 @@ BoxMode runStateMachine(void) {
 
 }
 
-bool stateInsertFlag(SFlag flag) {
-	uint8_t empty_idx = MAX_FLAGS;
-	for(uint8_t i = 0; i < MAX_FLAGS; ++i) {
-		if (flags[i] == flag) {
-
-			return false;
-		} else if (flags[i] == SFLAG_NULL && i < empty_idx) {
-			empty_idx = i;
-		}
-	}
-
-	if (empty_idx < MAX_FLAGS) {
-		flags[empty_idx] = flag;
-		return true;
-	}
-
-	return false;
-
-}
 
 void stateScheduleEvents(BoxMode mode) {
 	switch (state.mode) {
