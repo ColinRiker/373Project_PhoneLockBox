@@ -11,7 +11,7 @@
 
 #include <stdbool.h>
 
-#define MAX_FLAGS 8
+#define MAX_FLAGS 10
 
 typedef enum {
 	SFLAG_NULL,
@@ -22,8 +22,9 @@ typedef enum {
 	SFLAG_ROTENC_ROTATED,
 	SFLAG_TIMER_COMPLETE,
 	SFLAG_NFC_PHONE_PRESENT,
-
+	SFLAG_NFC_PHONE_NOT_PRESENT, //proposed addition, because we technically set it low on each state change unless we reinitalize to high?? or will thisbe done
 	SFLAG_BOX_CLOSED,
+	SFLAG_BOX_OPEN, //consider this lol
 	SFLAG_AUDIO_VOL_HIGH, //is audio volume high
 	SFLAG_AUDIO_MATCH, //is there an audio match
 	SFLAG_AUDIO_NO_MATCH
@@ -35,5 +36,7 @@ BoxMode runStateMachine(void);
 bool stateInsertFlag(SFlag flag);
 void stateScheduleEvents(BoxMode mode);
 void stateTimerCallback(void);
+void clearFlags(void);
+void inturruptControl(BoxMode mode);
 
 #endif
