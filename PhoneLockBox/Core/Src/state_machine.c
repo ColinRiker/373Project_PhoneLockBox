@@ -15,16 +15,20 @@
 #include "nfc.h"
 #include "rotary_encoder.h"
 #include "shared.h"
+#include "main.h"
 
 #define MINUTE 60000
 
 SFlag flags[MAX_FLAGS];
+//this is the bool that will be true if the OVERALL timer completes
+bool master_timer_done;
+
 
 extern BoxState state;
 extern BoxState next_state;
 
 
-bool stateHasFlag(SFlag flag) {
+bool hasFlag(SFlag flag) {
 	for (uint8_t i = 0; i < MAX_FLAGS; ++i) {
 		if (flags[i] == flag) return true;
 	}
@@ -35,7 +39,6 @@ bool stateInsertFlag(SFlag flag) {
 	uint8_t empty_idx = MAX_FLAGS;
 	for(uint8_t i = 0; i < MAX_FLAGS; ++i) {
 		if (flags[i] == flag) {
-
 			return false;
 		} else if (flags[i] == SFLAG_NULL && i < empty_idx) {
 			empty_idx = i;
@@ -57,7 +60,7 @@ void clearFlags() {
 		}
 }
 
-void inturruptControl(BoxState ourState) {
+void inturruptControl(BoxMode ourState) {
 
 	switch(ourState) {
 	//all states that need to have button DISABLED
@@ -68,7 +71,7 @@ void inturruptControl(BoxState ourState) {
 	case LOCKED_MONITOR_ASLEEP:
 	case EMERGENCY_OPEN:
 		//func to DISABLE button interrupt
-
+		HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);  // button
 		break;
 	//all states that need to have button ENABLED
 	case UNLOCKED_EMPTY_ASLEEP:
@@ -80,8 +83,10 @@ void inturruptControl(BoxState ourState) {
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
 	case LOCKED_FULL_ASLEEP:
 		//func to ENABLE button interrupt
-
+		HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 		break;
+	}
+	switch(ourState) {
 	//all states that need to have audio DISABLED
 	case UNLOCKED_EMPTY_ASLEEP:
 	case UNLOCKED_ASLEEP_TO_AWAKE:
@@ -94,15 +99,15 @@ void inturruptControl(BoxState ourState) {
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
 	case EMERGENCY_OPEN:
 		//func to DISABLE audio interrupt
-
+		HAL_NVIC_DisableIRQ(EXTI0_IRQn);      // audio
 		break;
 	//all states that need to have audio ENABLED
 	case LOCKED_MONITOR_AWAKE:
 	case LOCKED_FULL_ASLEEP:
 	case LOCKED_FULL_AWAKE:
 	case LOCKED_MONITOR_ASLEEP:
-		//func to DISABLE audio interrupt
-
+		//func to ENABLE audio interrupt
+		HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 		break;
 
  }
@@ -152,7 +157,7 @@ BoxMode runStateMachine(void) {
 
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
 		//if we take out phone at ANY point, we gotta go back to UNLCOKED_EMPTY_AWAKE
-		if(hasFlag()) {
+		if(hasFlag(SFLAG_NFC_PHONE_NOT_PRESENT)) {
 			next=UNLOCKED_EMPTY_AWAKE;
 		}
 		// PRIORITIZE MOVING TO AWAKE FUNC B
@@ -292,12 +297,17 @@ BoxMode runStateMachine(void) {
 		}
 		break;
 	default:
-#ifdef DEBUG_STATE_CONTROLLER
-		printf("[ERROR] Default case of state machine reached, system in bad state\n\r");
-#endif
+	#ifdef DEBUG_STATE_CONTROLLER
+			printf("[ERROR] Default case of state machine reached, system in bad state\n\r");
+	#endif
 		break;
 	}
 
+	if(master_timer_done) { //if we trigger overall timer
+		next = UNLOCKED_FULL_AWAKE_FUNC_A;
+		//reset
+		master_timer_done=false;
+	}
 
 	// update state if changed
 	if (next != curr) {
@@ -318,6 +328,7 @@ void stateScheduleEvents(BoxMode mode) {
 
 	case UNLOCKED_EMPTY_ASLEEP:
 		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
@@ -326,21 +337,26 @@ void stateScheduleEvents(BoxMode mode) {
 		break;
 
 	case UNLOCKED_EMPTY_AWAKE:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 1, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_B:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_FULL_ASLEEP:
+		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
@@ -349,43 +365,45 @@ void stateScheduleEvents(BoxMode mode) {
 		break;
 
 	case LOCKED_FULL_AWAKE:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_FULL_ASLEEP:
+		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_MONITOR_AWAKE:
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		eventRegister(audioEventCallback, EVENT_AUDIO, EVENT_DELTA, 1, 0);
-
 		break;
 
 	case LOCKED_MONITOR_ASLEEP:
+		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		eventRegister(audioEventCallback, EVENT_AUDIO, EVENT_DELTA, 1, 0);
 		break;
-
 
 	default:
 		break;
 	}
 }
+
 

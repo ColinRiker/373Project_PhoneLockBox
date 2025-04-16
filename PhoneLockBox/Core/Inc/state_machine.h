@@ -36,6 +36,6 @@ BoxMode runStateMachine(void);
 bool stateInsertFlag(SFlag flag);
 void stateScheduleEvents(BoxMode mode);
 void clearFlags(void);
-void inturruptControl(BoxMode mode);
+void inturruptControl(BoxMode ourState);
 
 #endif
