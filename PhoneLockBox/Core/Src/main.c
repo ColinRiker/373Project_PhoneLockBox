@@ -34,6 +34,7 @@
 #include "shared.h"
 #include "lock_timer.h"
 #include "font.h"
+#include "event_controller.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,6 +70,7 @@ PN532 pn532;
 extern uint32_t time_ms;
 extern uint8_t audio_count;
 extern SFlag flags[MAX_FLAGS];
+extern bool master_timer_done;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,7 +104,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim == &htim3 ) {
 		++time_ms;
 	} else if (htim == &htim2) {
-		master_set_done = true;
+		master_timer_done = true;
 	}
 }
 /* USER CODE END 0 */
@@ -169,7 +171,7 @@ int main(void)
 
 		// Poor Mans Sampling, or PM Sampling, if the delta is too big remove the data point!
 		// no need to deal with complex wrap around logic or direction determination!
-		if(state.mode == runStateMachine) {
+		if(state.mode == UNLOCKED_EMPTY_AWAKE) {
 			uint8_t cnt = TIM1->CNT;
 			if ((cnt - prev_cnt) * (cnt - prev_cnt) < 100) { //Check mag^2 of delta
 				if (prev_cnt < cnt) {

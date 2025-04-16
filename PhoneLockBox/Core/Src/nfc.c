@@ -89,10 +89,10 @@ void nfcEventCallbackRead(void) {
 
 	if (frame_length - 2 >= 0) {
 		//removeFlag();
-		insertFlag(SFLAG_NFC_PHONE_PRESENT);
+		stateInsertFlag(SFLAG_NFC_PHONE_PRESENT);
 	} else {
 		//removeFlag(SFLAG_NFC_PHONE_PRESENT);
-		insertFlag(SFLAG_NFC_PHONE_NOT_PRESENT);
+		stateInsertFlag(SFLAG_NFC_PHONE_NOT_PRESENT);
 	}
 
 	//We keep scheduling the start even incase the phone becomes present or is no longer present

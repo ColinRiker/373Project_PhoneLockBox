@@ -65,7 +65,7 @@ EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, 
 EventReturnCode eventClear();
 EventReturnCode eventControllerInit(void);
 EventReturnCode eventSchedule(uint8_t idx);
-EventReturnCode eventRemove(uint8_t idx);
+
 void eventRunner(void);
 void eventDefaultCallback(void);
 void eventTimerCallback(void);

@@ -64,6 +64,14 @@ EventReturnCode eventControllerInit(void) {
 	return EVENT_SUCCESS;
 }
 
+EventReturnCode eventRemove(uint8_t idx) {
+	events[idx].callback = eventDefaultCallback;
+	events[idx].label = EVENT_EMPTY;
+	events[idx].flag = EVENT_DISABLED;
+	events[idx].schedule_time = MAX_TIME;
+	events[idx].context = 0;
+}
+
 EventReturnCode eventSchedule(uint8_t idx) {
 	uint8_t schedule_offset = time_ms % 7; //Hopefully helps to cheaply redistribute scheduling
 
