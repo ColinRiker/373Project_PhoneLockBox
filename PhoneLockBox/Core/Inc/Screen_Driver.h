@@ -85,6 +85,7 @@
 #define ILI9341_STM32_DRIVER_H
 
 #include "stm32l4xx_hal.h"
+#include <stdbool.h>
 
 #define ILI9341_STM32_DRIVER_H
 #define LCD_CS_PORT GPIOB
@@ -99,6 +100,9 @@
 #define LCD_WIDTH_1	240
 #define BURST_MAX_SIZE 	100
 
+//color: RRRRRGGGGGGBBBBB
+// 0 11 66
+#define BACKG       0b0000000001100100
 #define BLACK       0x0000
 #define NAVY        0x000F
 #define DARKGREEN   0x03E0
@@ -146,7 +150,7 @@ void ILI9341_Draw_Pixel(uint16_t X,uint16_t Y,uint16_t Colour);
 void ILI9341_Draw_Rectangle(uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t Colour);
 void ILI9341_Draw_Horizontal_Line(uint16_t X, uint16_t Y, uint16_t Width, uint16_t Colour);
 void ILI9341_Draw_Vertical_Line(uint16_t X, uint16_t Y, uint16_t Height, uint16_t Colour);
-
+void ILI9341_Draw_Phone(uint16_t X, uint16_t Y, uint16_t Size,bool detected);
 void ILI9341_Draw_HollowCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t color);
 void ILI9341_Draw_FilledCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t color);
 void ILI9341_Draw_HollowRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1, uint16_t color);
@@ -154,7 +158,14 @@ void ILI9341_Draw_FilledRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, ui
 void ILI9341_Draw_Char(char ch, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor);
 void ILI9341_Draw_Text(const char* str, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor);
 void ILI9341_Draw_Image(const char* Image_Array, uint8_t Orientation);
-
+int get_text_width(const char* str, const uint8_t font[]);
+int get_text_height(const uint8_t font[]);
 void screenResolve(void);
+void ILI9341_Draw_RingSector(uint16_t X, uint16_t Y, uint16_t inner_radius, uint16_t outer_radius, float angle_deg, uint16_t color);
+void ILI9341_Draw_FilledCircle_Sector(uint16_t X, uint16_t Y, uint16_t radius, float angle_deg, uint16_t color);
+void ILI9341_Draw_Lock(uint16_t X, uint16_t Y, uint16_t Size, uint16_t Colour,bool locked);
+void ILI9341_Draw_RingSector_v2(uint16_t X, uint16_t Y, uint16_t inner_radius, uint16_t outer_radius, float start_angle_deg, float end_angle_deg, uint16_t color);
+void ILI9341_DisplayPower(bool on);
+
 
 #endif

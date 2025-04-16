@@ -16,7 +16,7 @@
 
 void audioInit(void);
 void audioCount(void);
-void audioSample(void);
+void audioEventCallback(void);
 bool audioMatch(void);
 
 #endif /* INC_AUDIO_H_ */

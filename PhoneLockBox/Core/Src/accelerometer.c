@@ -14,10 +14,10 @@
 #include "stm32l4xx_hal.h"
 #include "shared.h"
 
-extern Vector3D accelerometer_state;
-extern Vector3D prev_accelerometer_state;
-extern Vector3D magnometer_state;
-extern Vector3D prev_magnometer_state;
+Vector3D accelerometer_state;
+Vector3D prev_accelerometer_state;
+Vector3D magnometer_state;
+Vector3D prev_magnometer_state;
 
 void accCheck(void){
 	uint8_t buf[10]= {IRA_REG_M};
