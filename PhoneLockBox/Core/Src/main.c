@@ -63,10 +63,9 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
-BoxState state;
-BoxState next_state;
 PN532 pn532;
 
+extern BoxState state;
 extern uint32_t time_ms;
 extern uint8_t audio_count;
 extern SFlag flags[MAX_FLAGS];
@@ -172,7 +171,7 @@ int main(void)
 
 		// Poor Mans Sampling, or PM Sampling, if the delta is too big remove the data point!
 		// no need to deal with complex wrap around logic or direction determination!
-		if(state.mode == UNLOCKED_EMPTY_AWAKE) {
+		if(state == UNLOCKED_EMPTY_AWAKE) {
 			uint8_t cnt = TIM1->CNT;
 			if ((cnt - prev_cnt) * (cnt - prev_cnt) < 100) { //Check mag^2 of delta
 				if (prev_cnt < cnt) {

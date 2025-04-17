@@ -21,8 +21,10 @@ int LCD_HEIGHT = LCD_HEIGHT_1;
 int LCD_WIDTH = LCD_WIDTH_1;
 
 void screenResolve(void) {
+
 	int w = 0;
-	switch (state.mode) {
+	switch (state) {
+
 	case UNLOCKED_EMPTY_ASLEEP:
 		  ILI9341_Fill_Screen(BACKG);
 			w = (320 - get_text_width("UNLOCKED_EMPTY_ASLEEP",FONT4))/2;

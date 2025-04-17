@@ -20,14 +20,9 @@
 
 #define MINUTE 60000
 
+BoxState state;
 SFlag flags[MAX_FLAGS];
-//this is the bool that will be true if the OVERALL timer completes
-bool master_timer_done;
-
-
-extern BoxState state;
-extern BoxState next_state;
-
+bool master_timer_done; //Master time is the lock timer
 
 bool hasFlag(SFlag flag) {
 	for (uint8_t i = 0; i < MAX_FLAGS; ++i) {
@@ -55,15 +50,15 @@ bool stateInsertFlag(SFlag flag) {
 
 }
 
-void clearFlags() {
+void clearFlags(void) {
 	for (uint8_t i = 0; i < MAX_FLAGS; ++i) {
 			flags[i] = SFLAG_NULL;
 		}
 }
 
-void inturruptControl(BoxMode ourState) {
+void inturruptControl(void) {
 
-	switch(ourState) {
+	switch(state) {
 	//all states that need to have button DISABLED
 	case UNLOCKED_ASLEEP_TO_AWAKE:
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
@@ -87,7 +82,8 @@ void inturruptControl(BoxMode ourState) {
 		HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 		break;
 	}
-	switch(ourState) {
+
+	switch(state) {
 	//all states that need to have audio DISABLED
 	case UNLOCKED_EMPTY_ASLEEP:
 	case UNLOCKED_ASLEEP_TO_AWAKE:
@@ -116,17 +112,13 @@ void inturruptControl(BoxMode ourState) {
 
 
 void stateMachineInit(void) {
-	state.mode = UNLOCKED_EMPTY_ASLEEP;
-	state.interrupt_flag = NO_INTERRUPT;
-
-	next_state = state;
+	state = UNLOCKED_EMPTY_ASLEEP;
 }
 
-BoxMode runStateMachine(void) {
-	BoxMode curr = state.mode;
-	BoxMode next = curr;
+void runStateMachine(void) {
+	BoxState next = state;
 
-	switch (curr) {
+	switch (state) {
 
 	case UNLOCKED_EMPTY_ASLEEP:
 		// if the box moves, wake up
@@ -311,26 +303,25 @@ BoxMode runStateMachine(void) {
 	}
 
 	// update state if changed
-	if (next != curr) {
-
+	if (next != state) {
+		/* State Cleanup*/
 		eventClear();
 		clearFlags();
-		inturruptControl(next);
-		printf("transition: %d → %d\n", curr, next);
-		state.mode = next;
-		next_state.mode = next;
-		stateScheduleEvents(next);
 
-		screenResolve();
+		printf("transition: %d → %d\n", state, next);
+		state = next;
 
+		/* State Setup */
+		inturruptControl();
+		stateScheduleEvents();
+    screenResolve();
 	}
 
 }
 
 
-void stateScheduleEvents(BoxMode mode) {
-	switch (state.mode) {
-
+void stateScheduleEvents() {
+	switch (state) {
 	case UNLOCKED_EMPTY_ASLEEP:
 		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);

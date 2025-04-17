@@ -13,7 +13,7 @@
 #ifndef INC_EVENT_CONTROLLER_H_
 #define INC_EVENT_CONTROLLER_H_
 
-#define MAX_EVENT_COUNT 10 /* MUST BE LESS THAN 256 */
+#define MAX_EVENT_COUNT 16 /* MUST BE LESS THAN 256 */
 #define MAX_TIME 0xFFFF
 
 typedef enum {
@@ -62,7 +62,7 @@ typedef struct {
 
 uint16_t eventContextFormat();
 EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, uint16_t delta, uint8_t n_runs);
-EventReturnCode eventClear();
+void eventClear();
 EventReturnCode eventControllerInit(void);
 EventReturnCode eventSchedule(uint8_t idx);
 
@@ -70,8 +70,11 @@ void eventRunner(void);
 void eventDefaultCallback(void);
 void eventTimerCallback(void);
 
-//Debug Functions
-//void eventLabelToStr(char* buffer);
-//void eventFlagToStr(char* buffer);
+#ifdef DEBUG_EVENT_CONTROLLER
+void eventPrint(Event *event);
+const char* EventReturnCodeToStr(EventReturnCode code);
+const char* EventLabelToStr(EventLabel label);
+const char* EventFlagToStr(EventFlag flag);
+#endif
 
 #endif /*EVENT_CONTROLLER*/
