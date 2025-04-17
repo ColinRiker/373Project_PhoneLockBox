@@ -98,7 +98,11 @@
 #define LCD_RST_PIN GPIO_PIN_4
 #define LCD_HEIGHT_1 320
 #define LCD_WIDTH_1	240
-#define BURST_MAX_SIZE 	100
+#define BURST_MAX_SIZE 	500
+#define LCD_BACKLIGHT_PORT GPIOB
+#define LCD_BACKLIGHT_PIN GPIO_PIN_10
+
+
 
 //color: RRRRRGGGGGGBBBBB
 // 0 11 66
@@ -140,6 +144,7 @@ void ILI9341_Set_Address(uint16_t X1, uint16_t Y1, uint16_t X2, uint16_t Y2);
 void ILI9341_Reset(void);
 void ILI9341_Set_Rotation(uint8_t Rotation);
 
+void screenResolve(void);
 
 void ILI9341_Enable(void);
 void ILI9341_Init(void);

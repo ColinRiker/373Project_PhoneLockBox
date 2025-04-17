@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "Screen_Driver.h"
 
 #include "accelerometer.h"
 #include "audio.h"
@@ -311,6 +312,7 @@ BoxMode runStateMachine(void) {
 
 	// update state if changed
 	if (next != curr) {
+
 		eventClear();
 		clearFlags();
 		inturruptControl(next);
@@ -318,6 +320,9 @@ BoxMode runStateMachine(void) {
 		state.mode = next;
 		next_state.mode = next;
 		stateScheduleEvents(next);
+
+		screenResolve();
+
 	}
 
 }

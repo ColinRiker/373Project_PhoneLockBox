@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <math.h> // for atan2f and M_PI
 #include <stdbool.h>
+#include "font.h"
 
 #define HSPI_INSTANCE &hspi1
 
@@ -20,50 +21,122 @@ int LCD_HEIGHT = LCD_HEIGHT_1;
 int LCD_WIDTH = LCD_WIDTH_1;
 
 void screenResolve(void) {
+	int w = 0;
 	switch (state.mode) {
 	case UNLOCKED_EMPTY_ASLEEP:
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("UNLOCKED_EMPTY_ASLEEP",FONT4))/2;
+			  ILI9341_Draw_Text("UNLOCKED_EMPTY_ASLEEP",FONT4, w, 0, WHITE, BACKG);
 
 		break;
 	case UNLOCKED_ASLEEP_TO_AWAKE:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		ILI9341_Fill_Screen(BACKG);
+		w = (320 - get_text_width("UNLOCKED_ASLEEP_TO_AWAKE",FONT4))/2;
+		  ILI9341_Draw_Text("UNLOCKED_ASLEEP_TO_AWAKE",FONT4, w, 0, WHITE, BACKG);
+
+
 
 		break;
 	case UNLOCKED_EMPTY_AWAKE:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("UNLOCKED_EMPTY_AWAKE",FONT4))/2;
+			  ILI9341_Draw_Text("UNLOCKED_EMPTY_AWAKE",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("UNLOCKED_FULL_AWAKE_FUNC_A",FONT4))/2;
+			  ILI9341_Draw_Text("UNLOCKED_FULL_AWAKE_FUNC_A",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case UNLOCKED_FULL_AWAKE_FUNC_B:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("UNLOCKED_FULL_AWAKE_FUNC_B",FONT4))/2;
+			  ILI9341_Draw_Text("UNLOCKED_FULL_AWAKE_FUNC_B",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case UNLOCKED_FULL_ASLEEP:
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("UNLOCKED_FULL_ASLEEP",FONT4))/2;
+			  ILI9341_Draw_Text("UNLOCKED_FULL_ASLEEP",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case UNLOCKED_TO_LOCKED_AWAKE:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("UNLOCKED_TO_LOCKED_AWAKE",FONT4))/2;
+			  ILI9341_Draw_Text("UNLOCKED_TO_LOCKED_AWAKE",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case LOCKED_FULL_AWAKE:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("LOCKED_FULL_AWAKE",FONT4))/2;
+			  ILI9341_Draw_Text("LOCKED_FULL_AWAKE",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case LOCKED_FULL_ASLEEP:
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("LOCKED_FULL_ASLEEP",FONT4))/2;
+			  ILI9341_Draw_Text("LOCKED_FULL_ASLEEP",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case LOCKED_MONITOR_AWAKE:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("LOCKED_MONITOR_AWAKE",FONT4))/2;
+			  ILI9341_Draw_Text("LOCKED_MONITOR_AWAKE",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case LOCKED_MONITOR_ASLEEP:
+//		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_RESET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("LOCKED_MONITOR_ASLEEP",FONT4))/2;
+			  ILI9341_Draw_Text("LOCKED_MONITOR_ASLEEP",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("LOCKED_FULL_NOTIFICATION_FUNC_A",FONT4))/2;
+			  ILI9341_Draw_Text("LOCKED_FULL_NOTIFICATION_FUNC_A",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("LOCKED_FULL_NOTIFICATION_FUNC_B",FONT4))/2;
+			  ILI9341_Draw_Text("LOCKED_FULL_NOTIFICATION_FUNC_A",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	case EMERGENCY_OPEN:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("EMERGENCY_OPEN",FONT4))/2;
+			  ILI9341_Draw_Text("EMERGENCY_OPEN",FONT4, w, 0, WHITE, BACKG);
+
 
 		break;
 	default:
+		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT,LCD_BACKLIGHT_PIN,GPIO_PIN_SET);
+		  ILI9341_Fill_Screen(BACKG);
+			w = (320 - get_text_width("default",FONT4))/2;
+			  ILI9341_Draw_Text("default",FONT4, w, 0, WHITE, BACKG);
 
 		break;
 	}
