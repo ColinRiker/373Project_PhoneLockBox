@@ -32,6 +32,10 @@ bool hasFlag(SFlag flag) {
 }
 
 bool stateInsertFlag(SFlag flag) {
+#ifdef DEBUG_STATE_CONTROLLER
+	printf("[INFO] Inserting State flag: %s\n\r", SFlagToStr(flag));
+#endif
+
 	uint8_t empty_idx = MAX_FLAGS;
 	for(uint8_t i = 0; i < MAX_FLAGS; ++i) {
 		if (flags[i] == flag) {
@@ -52,8 +56,8 @@ bool stateInsertFlag(SFlag flag) {
 
 void clearFlags(void) {
 	for (uint8_t i = 0; i < MAX_FLAGS; ++i) {
-			flags[i] = SFLAG_NULL;
-		}
+		flags[i] = SFLAG_NULL;
+	}
 }
 
 void inturruptControl(void) {
@@ -69,7 +73,7 @@ void inturruptControl(void) {
 		//func to DISABLE button interrupt
 		HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);  // button
 		break;
-	//all states that need to have button ENABLED
+		//all states that need to have button ENABLED
 	case UNLOCKED_EMPTY_ASLEEP:
 	case UNLOCKED_EMPTY_AWAKE:
 	case UNLOCKED_FULL_ASLEEP:
@@ -98,7 +102,7 @@ void inturruptControl(void) {
 		//func to DISABLE audio interrupt
 		HAL_NVIC_DisableIRQ(EXTI0_IRQn);      // audio
 		break;
-	//all states that need to have audio ENABLED
+		//all states that need to have audio ENABLED
 	case LOCKED_MONITOR_AWAKE:
 	case LOCKED_FULL_ASLEEP:
 	case LOCKED_FULL_AWAKE:
@@ -107,7 +111,7 @@ void inturruptControl(void) {
 		HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 		break;
 
- }
+	}
 }
 
 
@@ -142,7 +146,7 @@ void runStateMachine(void) {
 			next = UNLOCKED_FULL_AWAKE_FUNC_A;
 		}
 		//if we cannot move to full awake, we move back to sleep
-		else if(hasFlag(SFLAG_TIMER_COMPLETE) && hasFlag(SFLAG_ROTENC_INTERRUPT)) {
+		else if(hasFlag(SFLAG_TIMER_COMPLETE) || hasFlag(SFLAG_ROTENC_INTERRUPT)) {
 			next = UNLOCKED_EMPTY_ASLEEP;
 		}
 
@@ -290,9 +294,9 @@ void runStateMachine(void) {
 		}
 		break;
 	default:
-	#ifdef DEBUG_STATE_CONTROLLER
-			printf("[ERROR] Default case of state machine reached, system in bad state\n\r");
-	#endif
+#ifdef DEBUG_STATE_CONTROLLER
+		printf("[ERROR] Default case of state machine reached, system in bad state\n\r");
+#endif
 		break;
 	}
 
@@ -309,14 +313,14 @@ void runStateMachine(void) {
 		clearFlags();
 
 #ifdef DEBUG_STATE_CONTROLLER
-		printf("[Info]State transitioning: %s → %s\n\r", stateToStr(state), stateToStr(next));
+		printf("\n[Info] --- State transition: %s → %s ---\n\r", stateToStr(state), stateToStr(next));
 #endif
 		state = next;
 
 		/* State Setup */
 		inturruptControl();
 		stateScheduleEvents();
-    screenResolve();
+		screenResolve();
 	}
 
 }
@@ -334,9 +338,8 @@ void stateScheduleEvents() {
 		break;
 
 	case UNLOCKED_EMPTY_AWAKE:
-		//eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 1, 0);
-		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, 5000, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
@@ -403,4 +406,25 @@ void stateScheduleEvents() {
 	}
 }
 
+#ifdef DEBUG_STATE_CONTROLLER
+const char* SFlagToStr(SFlag flag) {
+	switch (flag) {
+	case SFLAG_NULL: return "SFLAG_NULL";
+	case SFLAG_ACC_BOX_MOVED: return "SFLAG_ACC_BOX_MOVED";
+	case SFLAG_ADC_INTERRUPT: return "SFLAG_ADC_INTERRUPT";
+	case SFLAG_ADC_MATCH: return "SFLAG_ADC_MATCH";
+	case SFLAG_ROTENC_INTERRUPT: return "SFLAG_ROTENC_INTERRUPT";
+	case SFLAG_ROTENC_ROTATED: return "SFLAG_ROTENC_ROTATED";
+	case SFLAG_TIMER_COMPLETE: return "SFLAG_TIMER_COMPLETE";
+	case SFLAG_NFC_PHONE_PRESENT: return "SFLAG_NFC_PHONE_PRESENT";
+	case SFLAG_NFC_PHONE_NOT_PRESENT: return "SFLAG_NFC_PHONE_NOT_PRESENT";
+	case SFLAG_BOX_CLOSED: return "SFLAG_BOX_CLOSED";
+	case SFLAG_BOX_OPEN: return "SFLAG_BOX_OPEN";
+	case SFLAG_AUDIO_VOL_HIGH: return "SFLAG_AUDIO_VOL_HIGH";
+	case SFLAG_AUDIO_MATCH: return "SFLAG_AUDIO_MATCH";
+	case SFLAG_AUDIO_NO_MATCH: return "SFLAG_AUDIO_NO_MATCH";
+	default: return "UNKNOWN_SFLAG";
+	}
+}
+#endif
 

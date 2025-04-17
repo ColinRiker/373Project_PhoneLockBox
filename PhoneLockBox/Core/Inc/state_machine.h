@@ -38,4 +38,8 @@ void stateScheduleEvents(void);
 void clearFlags(void);
 void inturruptControl(void);
 
+#ifdef DEBUG_STATE_CONTROLLER
+	const char* SFlagToStr(SFlag flag);
+#endif
+
 #endif

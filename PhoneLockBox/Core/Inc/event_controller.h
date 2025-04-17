@@ -14,7 +14,7 @@
 #define INC_EVENT_CONTROLLER_H_
 
 #define MAX_EVENT_COUNT 16 /* MUST BE LESS THAN 256 */
-#define MAX_TIME 0xFFFF
+#define MAX_TIME 0xFFFFFFFF
 
 typedef enum {
 	EVENT_SUCCESS,
@@ -56,7 +56,7 @@ typedef struct {
 	void (*callback) (void);
 	EventLabel label;
 	EventFlag flag;
-	uint16_t schedule_time;
+	uint32_t schedule_time;
 	uint16_t context;
 } Event;
 

@@ -103,21 +103,21 @@ int PN532_ReadFrame(PN532* pn532, uint8_t* response, uint16_t length) {
 	while (buff[offset] == 0x00) {
 		offset += 1;
 		if (offset >= length + 8){
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 			pn532->log("Response frame preamble does not contain 0x00FF!");
 #endif
 			return PN532_STATUS_ERROR;
 		}
 	}
 	if (buff[offset] != 0xFF) {
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 		pn532->log("Response frame preamble does not contain 0x00FF!");
 #endif
 		return PN532_STATUS_ERROR;
 	}
 	offset += 1;
 	if (offset >= length + 8) {
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 		pn532->log("Response contains no data!");
 #endif
 		return PN532_STATUS_ERROR;
@@ -125,7 +125,7 @@ int PN532_ReadFrame(PN532* pn532, uint8_t* response, uint16_t length) {
 	// Check length & length checksum match.
 	uint8_t frame_len = buff[offset];
 	if (((frame_len + buff[offset+1]) & 0xFF) != 0) {
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 		pn532->log("Response length checksum did not match length!");
 #endif
 		return PN532_STATUS_ERROR;
@@ -136,7 +136,7 @@ int PN532_ReadFrame(PN532* pn532, uint8_t* response, uint16_t length) {
 	}
 	checksum &= 0xFF;
 	if (checksum != 0) {
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 		pn532->log("Response checksum did not match expected checksum");
 #endif
 		return PN532_STATUS_ERROR;
@@ -228,7 +228,7 @@ int PN532_GetFirmwareVersion(PN532* pn532, uint8_t* version) {
 	// length of version: 4
 	if (PN532_CallFunction(pn532, PN532_COMMAND_GETFIRMWAREVERSION,
 			version, 4, NULL, 0, 500) == PN532_STATUS_ERROR) {
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 		pn532->log("Failed to detect the PN532");
 #endif
 		return PN532_STATUS_ERROR;
@@ -418,11 +418,19 @@ void PN532_Init(PN532* pn532) {
  * I2C
  **************************************************************************/
 void i2c_read(uint8_t* data, uint16_t count) {
-	HAL_I2C_Master_Receive(&hi2c1, _I2C_ADDRESS, data, count, _I2C_TIMEOUT);
+	if (HAL_I2C_Master_Receive(&hi2c1, _I2C_ADDRESS, data, count, _I2C_TIMEOUT) != HAL_OK) {
+#ifdef DEBUG_NFC
+		printf("[ERROR] NFC receive I2C transmit failed\n\r");
+#endif
+	}
 }
 
 void i2c_write(uint8_t* data, uint16_t count) {
-	HAL_I2C_Master_Transmit(&hi2c1, _I2C_ADDRESS, data, count, _I2C_TIMEOUT);
+	if (HAL_I2C_Master_Transmit(&hi2c1, _I2C_ADDRESS, data, count, _I2C_TIMEOUT) != HAL_OK) {
+#ifdef DEBUG_NFC
+		printf("[ERROR] NFC receive I2C transmit failed\n\r");
+#endif
+	}
 }
 
 int PN532_I2C_ReadData(uint8_t* data, uint16_t count) {

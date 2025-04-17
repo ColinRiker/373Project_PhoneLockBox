@@ -15,7 +15,7 @@
 #include "shared.h"
 
 /* Parameters */
-#define ACCELERATION_WAKE_DELTA 5000
+#define ACCELERATION_WAKE_DELTA 50000
 #define MAGNOMETER_THRESHOLD 5000
 
 

@@ -9,10 +9,6 @@
 #include "state_machine.h"
 #include "stm32l4xx_hal.h"
 
-#ifndef DEBUG_EVENT_CONTROLLER
-#define DEBUG_EVENT_CONTROLLER
-#endif
-
 extern TIM_HandleTypeDef htim3;
 
 /* Event Data Structures */
@@ -27,7 +23,7 @@ EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, 
 		if (delta > 255) {
 			delta = 255;
 #ifdef DEBUG_EVENT_CONTROLLER
-		printf("[ERROR] Delta too large for repeat event, setting to 255\n\r");
+			printf("[ERROR] Delta too large for repeat event, setting to 255\n\r");
 #endif
 		}
 		context = (n_runs << 8) | (context & 0x00FF);
@@ -48,6 +44,11 @@ EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, 
 }
 
 void eventRemove(uint8_t idx) {
+#ifdef DEBUG_EVENT_CONTROLLER
+	printf("[INFO] Removing Event");
+	eventPrint(&events[idx]);
+#endif
+
 	events[idx].callback = eventDefaultCallback;
 	events[idx].label = EVENT_EMPTY;
 	events[idx].flag = EVENT_DISABLED;
@@ -57,12 +58,13 @@ void eventRemove(uint8_t idx) {
 
 void eventClear(void) {
 	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
-		eventRemove(i);
+		if(events[i].label != EVENT_EMPTY) {
+			eventRemove(i);
+		}
 	}
 }
 
 EventReturnCode eventControllerInit(void) {
-	printf("[INFO] Event system initalization\n\r");
 	time_ms = 0;
 	eventClear();
 
@@ -99,12 +101,12 @@ EventReturnCode eventSchedule(uint8_t idx) {
 		events[idx].schedule_time = time_ms;
 		break;
 	default:
-		printf("[ERROR] Bad event type schedule, ID: %d\n\r", events[idx]);
+		printf("[ERROR] Bad event type, not scheduled, ID: %ls\n\r", (int*) &events[idx]);
 		return EVENT_GENERIC_ERROR;
 	}
 
 #ifdef DEBUG_EVENT_CONTROLLER
-	printf("Newly Scheduled ");
+	printf("[INFO] Scheduled ");
 	eventPrint(&events[idx]);
 #endif
 
@@ -113,7 +115,8 @@ EventReturnCode eventSchedule(uint8_t idx) {
 
 void eventRunner(void) {
 	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
-		if (events[i].schedule_time <= time_ms) {
+		if (events[i].schedule_time <= time_ms && events[i].label != EVENT_EMPTY) {
+
 			events[i].callback();
 
 			//Reschedule or Remove Handler
@@ -173,49 +176,49 @@ void eventDefaultCallback(void) {
 #endif
 }
 
-//#ifdef DEBUG_EVENT_CONTROLLER
+#ifdef DEBUG_EVENT_CONTROLLER
 void eventPrint(Event *event) {
-	printf("Event Info, Label: %s, Flag: %s, Context: %x, Ptr: %lu\n\r",
+	printf("Label: %s, Flag: %s, Context: %x, Ptr: %lu\n\r",
 			EventLabelToStr(event->label), EventFlagToStr(event->flag), event->context, (uint32_t)event);
 }
 
 const char* EventReturnCodeToStr(EventReturnCode code) {
-    switch (code) {
-        case EVENT_SUCCESS: return "EVENT_SUCCESS";
-        case EVENT_LABEL_NOT_FOUND: return "EVENT_LABEL_NOT_FOUND";
-        case EVENT_LABEL_ALREADY_USED: return "EVENT_LABEL_ALREADY_USED";
-        case EVENT_INIT_FAILED: return "EVENT_INIT_FAILED";
-        case EVENT_QUEUE_FULL: return "EVENT_QUEUE_FULL";
-        case EVENT_GENERIC_ERROR: return "EVENT_GENERIC_ERROR";
-        default: return "UNKNOWN_RC";
-    }
+	switch (code) {
+	case EVENT_SUCCESS: return "EVENT_SUCCESS";
+	case EVENT_LABEL_NOT_FOUND: return "EVENT_LABEL_NOT_FOUND";
+	case EVENT_LABEL_ALREADY_USED: return "EVENT_LABEL_ALREADY_USED";
+	case EVENT_INIT_FAILED: return "EVENT_INIT_FAILED";
+	case EVENT_QUEUE_FULL: return "EVENT_QUEUE_FULL";
+	case EVENT_GENERIC_ERROR: return "EVENT_GENERIC_ERROR";
+	default: return "UNKNOWN_RC";
+	}
 }
 
 const char* EventLabelToStr(EventLabel label) {
-    switch (label) {
-        case EVENT_EMPTY: return "EVENT_EMPTY";
-        case EVENT_NFC_START_READ: return "EVENT_NFC_START_READ";
-        case EVENT_NFC_POLL: return "EVENT_NFC_POLL";
-        case EVENT_NFC_READ: return "EVENT_NFC_READ";
-        case EVENT_ROTARY_ENCODER: return "EVENT_ROTARY_ENCODER";
-        case EVENT_AUDIO: return "EVENT_AUDIO";
-        case EVENT_TIMER: return "EVENT_TIMER";
-        case EVENT_ACCELEROMETER: return "EVENT_ACCELEROMETER";
-        default: return "UNKNOWN_LABEL";
-    }
+	switch (label) {
+	case EVENT_EMPTY: return "EVENT_EMPTY";
+	case EVENT_NFC_START_READ: return "EVENT_NFC_START_READ";
+	case EVENT_NFC_POLL: return "EVENT_NFC_POLL";
+	case EVENT_NFC_READ: return "EVENT_NFC_READ";
+	case EVENT_ROTARY_ENCODER: return "EVENT_ROTARY_ENCODER";
+	case EVENT_AUDIO: return "EVENT_AUDIO";
+	case EVENT_TIMER: return "EVENT_TIMER";
+	case EVENT_ACCELEROMETER: return "EVENT_ACCELEROMETER";
+	default: return "UNKNOWN_LABEL";
+	}
 }
 
 const char* EventFlagToStr(EventFlag flag) {
-    switch (flag) {
-        case EVENT_DISABLED: return "EVENT_DISABLED";
-        case EVENT_SINGLE: return "EVENT_SINGLE";
-        case EVENT_SINGLE_IMMEDIATE: return "EVENT_SINGLE_IMMEDIATE";
-        case EVENT_DELTA: return "EVENT_DELTA";
-        case EVENT_DELTA_IMMEDIATE: return "EVENT_DELTA_IMMEDIATE";
-        case EVENT_N_REPEAT: return "EVENT_N_REPEAT";
-        case EVENT_N_REPEAT_IMMEDIATE: return "EVENT_N_REPEAT_IMMEDIATE";
-        default: return "UNKNOWN_FLAG";
-    }
+	switch (flag) {
+	case EVENT_DISABLED: return "EVENT_DISABLED";
+	case EVENT_SINGLE: return "EVENT_SINGLE";
+	case EVENT_SINGLE_IMMEDIATE: return "EVENT_SINGLE_IMMEDIATE";
+	case EVENT_DELTA: return "EVENT_DELTA";
+	case EVENT_DELTA_IMMEDIATE: return "EVENT_DELTA_IMMEDIATE";
+	case EVENT_N_REPEAT: return "EVENT_N_REPEAT";
+	case EVENT_N_REPEAT_IMMEDIATE: return "EVENT_N_REPEAT_IMMEDIATE";
+	default: return "UNKNOWN_FLAG";
+	}
 }
 
-//#endif
+#endif

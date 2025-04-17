@@ -17,6 +17,8 @@
 
 extern PN532 pn532;
 
+uint8_t poll_count;
+
 void nfcInit(void) {
 	uint8_t buff[255];
 
@@ -54,6 +56,7 @@ bool nfcHasTarget(void) {
 
 void nfcEventCallbackStart(void) {
 	uint8_t buff[PN532_FRAME_MAX_LENGTH];
+	poll_count = 0;
 
 	buff[0] = PN532_HOSTTOPN532;
 	buff[1] = PN532_COMMAND_INLISTPASSIVETARGET & 0xFF;
@@ -61,10 +64,10 @@ void nfcEventCallbackStart(void) {
 	buff[3] = PN532_MIFARE_ISO14443A; // parm 2
 
 	if (PN532_WriteFrame(&pn532, buff, 4) != PN532_ERROR_NONE) {
-		eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 5, 0);
+		eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 25, 0);
 
 	} else {
-		eventRegister(nfcEventCallbackPoll, EVENT_NFC_POLL, EVENT_SINGLE, 1, 0);
+		eventRegister(nfcEventCallbackPoll, EVENT_NFC_POLL, EVENT_SINGLE, 10, 0);
 
 	}
 
@@ -76,9 +79,9 @@ void nfcEventCallbackPoll(void) {
 	PN532_I2C_ReadData(status, sizeof(status));
 
 	if (status[0] == PN532_I2C_READY) {
-		eventRegister(nfcEventCallbackRead, EVENT_NFC_READ, EVENT_SINGLE, 1, 0);
+		eventRegister(nfcEventCallbackRead, EVENT_NFC_READ, EVENT_SINGLE, 25, 0);
 	} else {
-		eventRegister(nfcEventCallbackPoll, EVENT_NFC_POLL, EVENT_SINGLE, 1, 0);
+		eventRegister(nfcEventCallbackPoll, EVENT_NFC_POLL, EVENT_SINGLE, 10, 0);
 	}
 }
 
@@ -101,7 +104,7 @@ void nfcEventCallbackRead(void) {
 	}
 
 	//We keep scheduling the start even incase the phone becomes present or is no longer present
-	eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 1, 0);
+	eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 25, 0);
 }
 
 

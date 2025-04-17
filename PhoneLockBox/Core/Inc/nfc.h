@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include "pn532.h"
 
+#define MAX_POLL 100
+
 void nfcInit(void);
 bool nfcHasTarget(void);
 
