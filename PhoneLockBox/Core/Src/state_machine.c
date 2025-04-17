@@ -309,7 +309,7 @@ void runStateMachine(void) {
 		clearFlags();
 
 #ifdef DEBUG_STATE_CONTROLLER
-		printf("[Info]State transitioning: %s → %s\n", stateToStr(state), stateToStr(next));
+		printf("[Info]State transitioning: %s → %s\n\r", stateToStr(state), stateToStr(next));
 #endif
 		state = next;
 
@@ -326,16 +326,15 @@ void stateScheduleEvents() {
 	switch (state) {
 	case UNLOCKED_EMPTY_ASLEEP:
 		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_ASLEEP_TO_AWAKE:
-		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE_IMMEDIATE, 500, 0);
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, 5000, 0);
 		break;
 
 	case UNLOCKED_EMPTY_AWAKE:
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		//eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
 		eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 1, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		break;

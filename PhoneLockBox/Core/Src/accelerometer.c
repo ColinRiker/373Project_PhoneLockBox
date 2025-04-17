@@ -27,13 +27,16 @@ void accInit(void){
 	accelerometer_state.y_componenet = 0;
 	accelerometer_state.z_componenet = 0;
 
-	prev_accelerometer_state = accelerometer_state;
+
 
 	if(HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 2, I2C_TIMEOUT) != HAL_OK) {
 #ifdef DEBUG_ACC_MAG
 		printf("[ERROR] Accelerometer initialization I2C transmit failed\n\r");
 #endif
 	}
+
+	accRead();
+	prev_accelerometer_state = accelerometer_state;
 }
 
 
@@ -52,20 +55,28 @@ void accRead(){
 		printf("[ERROR] Accelerometer Data I2C receive failed\n\r");
 #endif
 	}
+	prev_accelerometer_state = accelerometer_state;
 
 	accelerometer_state.x_componenet = (out_buf_8[1] << 8) | out_buf_8[0];
 	accelerometer_state.y_componenet = (out_buf_8[3] << 8) | out_buf_8[2];
 	accelerometer_state.z_componenet = (out_buf_8[5] << 8) | out_buf_8[4];
 
 #ifdef DEBUG_ACC_MAG
-		printf("[INFO] Magnetometer Read result, x: %u, y: %u, z: %u\n\r",
+		printf("[INFO] Accelerometer Read result, x: %d, y: %d, z: %d\n\r",
 				accelerometer_state.x_componenet, accelerometer_state.y_componenet, accelerometer_state.z_componenet);
 #endif
 }
 
 void accDeltaEvent(void) {
 	accRead();  // updates current_state and last_state
-	if (VectorDelta(&accelerometer_state, &prev_accelerometer_state) >= ACCELERATION_WAKE_DELTA) {
+
+	int32_t delta = (accelerometer_state.x_componenet - prev_accelerometer_state.x_componenet) +
+			(accelerometer_state.y_componenet - prev_accelerometer_state.y_componenet) +
+			(accelerometer_state.z_componenet - prev_accelerometer_state.z_componenet);
+
+	printf("[INFO] Accelerometer Delta: %d\n\r", delta);
+
+	if (abs(delta) >= ACCELERATION_WAKE_DELTA) {
 		stateInsertFlag(SFLAG_ACC_BOX_MOVED);
 #ifdef DEBUG_ACC_MAG
 		printf("[INFO] Accelerometer detected the box has moved, flag inserted\n\r");
@@ -105,7 +116,7 @@ void magRead(Vector3D* vec){
 	vec->z_componenet = (out_buf_8[5] << 8) | out_buf_8[4];
 
 #ifdef DEBUG_ACC_MAG
-		printf("[INFO] Magnetometer Read result, x: %u, y: %u, z: %u\n\r",
+		printf("[INFO] Magnetometer Read result, x: %d, y: %d, z: %d\n\r",
 				vec->x_componenet, vec->y_componenet, vec->z_componenet);
 #endif
 }

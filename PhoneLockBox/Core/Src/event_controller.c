@@ -4,10 +4,14 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
-#include <stdio.h>
 
+#include "shared.h"
 #include "state_machine.h"
 #include "stm32l4xx_hal.h"
+
+#ifndef DEBUG_EVENT_CONTROLLER
+#define DEBUG_EVENT_CONTROLLER
+#endif
 
 extern TIM_HandleTypeDef htim3;
 
@@ -28,7 +32,7 @@ EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, 
 		}
 		context = (n_runs << 8) | (context & 0x00FF);
 	}
-
+	printf("[INFO] event registration called with, %s, %s, %u %u\n\r", EventLabelToStr(label), EventFlagToStr(flag), delta, n_runs);
 	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
 		if (events[i].label == EVENT_EMPTY) {
 			events[i].callback = callback;
@@ -58,13 +62,16 @@ void eventClear(void) {
 }
 
 EventReturnCode eventControllerInit(void) {
+	printf("[INFO] Event system initalization\n\r");
 	time_ms = 0;
 	eventClear();
 
-	if (HAL_TIM_Base_Start(&htim3) != HAL_OK) {
+	if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK) {
+		printf("[ERROR] Timer 3 did not start\n\r");
 		return EVENT_INIT_FAILED;
 	}
 
+	printf("[INFO] Event system initalization complete\n\r");
 	return EVENT_SUCCESS;
 }
 
@@ -75,17 +82,24 @@ EventReturnCode eventSchedule(uint8_t idx) {
 	switch(events[idx].flag) {
 	case EVENT_SINGLE:
 		events[idx].schedule_time = time_ms + schedule_offset + events[idx].context;
+		break;
 	case EVENT_SINGLE_IMMEDIATE:
 		events[idx].schedule_time = time_ms + events[idx].context;
+		break;
 	case EVENT_DELTA:
 		events[idx].schedule_time = time_ms + schedule_offset;
+		break;
 	case EVENT_DELTA_IMMEDIATE:
 		events[idx].schedule_time = time_ms;
+		break;
 	case EVENT_N_REPEAT:
 		events[idx].schedule_time = time_ms + schedule_offset;
+		break;
 	case EVENT_N_REPEAT_IMMEDIATE:
 		events[idx].schedule_time = time_ms;
+		break;
 	default:
+		printf("[ERROR] Bad event type schedule, ID: %d\n\r", events[idx]);
 		return EVENT_GENERIC_ERROR;
 	}
 
@@ -159,10 +173,10 @@ void eventDefaultCallback(void) {
 #endif
 }
 
-#ifdef DEBUG_EVENT_CONTROLLER
+//#ifdef DEBUG_EVENT_CONTROLLER
 void eventPrint(Event *event) {
-	printf("Event Info, Label: %s, Flag: %s, Context: %x, Ptr: %x\n\r",
-			EventLabelToStr(event->label), EventFlagToStr(event->flag), event->context, event);
+	printf("Event Info, Label: %s, Flag: %s, Context: %x, Ptr: %lu\n\r",
+			EventLabelToStr(event->label), EventFlagToStr(event->flag), event->context, (uint32_t)event);
 }
 
 const char* EventReturnCodeToStr(EventReturnCode code) {
@@ -204,4 +218,4 @@ const char* EventFlagToStr(EventFlag flag) {
     }
 }
 
-#endif
+//#endif

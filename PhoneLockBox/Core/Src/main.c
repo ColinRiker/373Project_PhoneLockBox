@@ -91,10 +91,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if (GPIO_Pin == GPIO_PIN_0) {  // Replace with your actual D0-connected pin
 		++audio_count;
 #ifdef DEBUG_AUDIO
-		printf("EXTI 0 Interrupt Triggered from KY-037 D0!\n");
+		printf("[INFO] EXTI 0 Interrupt Triggered from KY-037 D0!\n\r");
 #endif /* DEBUG_AUDIO */
 	} else if (GPIO_Pin == GPIO_PIN_10) {
 		stateInsertFlag(SFLAG_ROTENC_INTERRUPT);
+
 	}
 }
 
@@ -157,6 +158,8 @@ int main(void)
 	eventControllerInit();
 
 	screenResolve();
+	stateScheduleEvents();
+	inturruptControl();
 
   /* USER CODE END 2 */
 
