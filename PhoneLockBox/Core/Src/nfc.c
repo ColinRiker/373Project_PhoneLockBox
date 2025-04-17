@@ -23,7 +23,7 @@ void nfcInit(void) {
 	PN532_I2C_Init(&pn532);
 	PN532_GetFirmwareVersion(&pn532, buff);
 
-#ifdef DEBUG_OUT
+#ifdef DEBUG_NFC
 	if (PN532_GetFirmwareVersion(&pn532, buff) == PN532_STATUS_OK) {
 		printf("Found PN532 with firmware version: %d.%d\r\n", buff[1], buff[2]);
 	} else {
@@ -60,9 +60,14 @@ void nfcEventCallbackStart(void) {
 	buff[2] = 0x01; // parm 1
 	buff[3] = PN532_MIFARE_ISO14443A; // parm 2
 
-	PN532_WriteFrame(&pn532, buff, 4);
+	if (PN532_WriteFrame(&pn532, buff, 4) != PN532_ERROR_NONE) {
+		eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 5, 0);
 
-	eventRegister(nfcEventCallbackPoll, EVENT_NFC_POLL, EVENT_SINGLE, 1, 0);
+	} else {
+		eventRegister(nfcEventCallbackPoll, EVENT_NFC_POLL, EVENT_SINGLE, 1, 0);
+
+	}
+
 }
 
 void nfcEventCallbackPoll(void) {
