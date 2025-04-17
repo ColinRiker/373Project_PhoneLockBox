@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "Screen_Driver.h"
 
 #include "accelerometer.h"
 #include "audio.h"
@@ -313,6 +314,7 @@ void runStateMachine(void) {
 		/* State Setup */
 		inturruptControl();
 		stateScheduleEvents();
+    screenResolve();
 	}
 
 }
