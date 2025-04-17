@@ -308,7 +308,9 @@ void runStateMachine(void) {
 		eventClear();
 		clearFlags();
 
-		printf("transition: %d → %d\n", state, next);
+#ifdef DEBUG_STATE_CONTROLLER
+		printf("[Info]State transitioning: %s → %s\n", stateToStr(state), stateToStr(next));
+#endif
 		state = next;
 
 		/* State Setup */
