@@ -8,6 +8,8 @@
 #ifndef INC_SHARED_H_
 #define INC_SHARED_H_
 
+
+#define I2C_TIMEOUT 1000
 #define DEBUG_OUT //Comment out to not compile debug functions and statement
 
 #ifdef DEBUG_OUT
@@ -18,6 +20,7 @@
 #define DEBUG_AUDIO
 #define DEBUG_ROTARY_ENCODER
 #define DEBUG_STATE_CONTROLLER
+#define DEBUG_ACC_MAG
 #endif /*END DEBUG DEFINES*/
 
 #include <string.h>

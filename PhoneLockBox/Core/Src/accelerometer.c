@@ -19,16 +19,6 @@ extern I2C_HandleTypeDef hi2c1;
 
 Vector3D accelerometer_state;
 Vector3D prev_accelerometer_state;
-Vector3D magnometer_state;
-Vector3D prev_magnometer_state;
-
-void accCheck(void){
-	uint8_t buf[10]= {IRA_REG_M};
-	HAL_I2C_Master_Transmit(&hi2c1, SAD_W_M, &buf[0], 1, 1000);
-	uint8_t out_buf[10] = {};
-	HAL_I2C_Master_Receive(&hi2c1, SAD_R_M, &out_buf[0], 1, 1000);
-}
-
 
 void accInit(void){
 	uint8_t buf[10]= {CTRL_REG1_A,0x97};
@@ -39,67 +29,87 @@ void accInit(void){
 
 	prev_accelerometer_state = accelerometer_state;
 
-	HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 2, 1000);
+	if(HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 2, I2C_TIMEOUT) != HAL_OK) {
+#ifdef DEBUG_ACC_MAG
+		printf("[ERROR] Accelerometer initialization I2C transmit failed\n\r");
+#endif
+	}
 }
 
 
 void accRead(){
 
 	uint8_t buf[10]= {ACC_FIRST_ADDR | (1 << 7)};
-	HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 1, 1000);
+	if (HAL_I2C_Master_Transmit(&hi2c1, ACC_WRITE, &buf[0], 1, I2C_TIMEOUT) != HAL_OK) {
+#ifdef DEBUG_ACC_MAG
+		printf("[ERROR] Accelerometer Data I2C transmit failed\n\r");
+#endif
+	}
 
 	uint8_t out_buf_8[6] = {};
-	HAL_I2C_Master_Receive(&hi2c1, ACC_READ, &out_buf_8[0], 6, 1000);
+	if (HAL_I2C_Master_Receive(&hi2c1, ACC_READ, &out_buf_8[0], 6, I2C_TIMEOUT) != HAL_OK) {
+#ifdef DEBUG_ACC_MAG
+		printf("[ERROR] Accelerometer Data I2C receive failed\n\r");
+#endif
+	}
 
 	accelerometer_state.x_componenet = (out_buf_8[1] << 8) | out_buf_8[0];
-	accelerometer_state.y_componenet =(out_buf_8[3] << 8) | out_buf_8[2];
-	accelerometer_state.z_componenet =(out_buf_8[5] << 8) | out_buf_8[4];
-}
+	accelerometer_state.y_componenet = (out_buf_8[3] << 8) | out_buf_8[2];
+	accelerometer_state.z_componenet = (out_buf_8[5] << 8) | out_buf_8[4];
 
-bool accHasMoved() {
-	return VectorDelta(&accelerometer_state, &prev_accelerometer_state) >= ACCELERATION_WAKE_DELTA;
+#ifdef DEBUG_ACC_MAG
+		printf("[INFO] Magnetometer Read result, x: %u, y: %u, z: %u\n\r",
+				accelerometer_state.x_componenet, accelerometer_state.y_componenet, accelerometer_state.z_componenet);
+#endif
 }
 
 void accDeltaEvent(void) {
 	accRead();  // updates current_state and last_state
-	if (accHasMoved()) {
+	if (VectorDelta(&accelerometer_state, &prev_accelerometer_state) >= ACCELERATION_WAKE_DELTA) {
 		stateInsertFlag(SFLAG_ACC_BOX_MOVED);
+#ifdef DEBUG_ACC_MAG
+		printf("[INFO] Accelerometer detected the box has moved, flag inserted\n\r");
+#endif
 	}
 }
 
 void magInit(){
-	magnometer_state.x_componenet = 0;
-	magnometer_state.y_componenet = 0;
-	magnometer_state.z_componenet = 0;
-
-	//bin is setting to 3.0 hz
 	uint8_t buf[10]= {CRA_REG_M | (1 << 7),0b00001000,0b01100000,0b00000000};
-	HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 4, 1000);
+	if (HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 4, I2C_TIMEOUT) != HAL_OK) {
+#ifdef DEBUG_ACC_MAG
+		printf("[ERROR] Magnetometer initialization I2C transmit failed\n\r");
+#endif
+	}
 }
 
 
 
 void magRead(Vector3D* vec){
 	uint8_t buf[10]= {MAG_FIRST_ADDR | (1 << 7)};
-	HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 1, 1000);
+	if (HAL_I2C_Master_Transmit(&hi2c1, MAG_WRITE, &buf[0], 1, I2C_TIMEOUT) != HAL_OK) {
+#ifdef DEBUG_ACC_MAG
+		printf("[ERROR] Magnetometer Data I2C transmit failed\n\r");
+#endif
+	}
 
 	uint8_t out_buf_8[6] = {};
-	HAL_I2C_Master_Receive(&hi2c1, MAG_READ, &out_buf_8[0], 6, 1000);
+	if (HAL_I2C_Master_Receive(&hi2c1, MAG_READ, &out_buf_8[0], 6, I2C_TIMEOUT) != HAL_OK) {
+#ifdef DEBUG_ACC_MAG
+		printf("[ERROR] Magnetometer Data I2C receive failed\n\r");
+#endif
+	}
 
 
 	vec->x_componenet = (out_buf_8[1] << 8) | out_buf_8[0];
 	vec->y_componenet =	(out_buf_8[3] << 8) | out_buf_8[2];
 	vec->z_componenet = (out_buf_8[5] << 8) | out_buf_8[4];
+
+#ifdef DEBUG_ACC_MAG
+		printf("[INFO] Magnetometer Read result, x: %u, y: %u, z: %u\n\r",
+				vec->x_componenet, vec->y_componenet, vec->z_componenet);
+#endif
 }
 
-bool magIsClosed(void) {
-    Vector3D vec;
-    magRead(&vec);  // gets raw x/y/z magnetometer values
-
-    int magnitude = abs(vec.x_componenet) + abs(vec.y_componenet) + abs(vec.z_componenet);
-
-    return (magnitude > 5000);  // adjust threshold based on magnet
-}
 
 
 void magBoxStatusEvent(void) {
@@ -108,9 +118,17 @@ void magBoxStatusEvent(void) {
 
 	int magnitude = abs(vec.x_componenet) + abs(vec.y_componenet) + abs(vec.z_componenet);
 
-	if (magnitude > 5000) {  // not sure what this value needs to be
+	if (magnitude > MAGNOMETER_THRESHOLD) {  // not sure what this value needs to be
 		stateInsertFlag(SFLAG_BOX_CLOSED);
+#ifdef DEBUG_ACC_MAG
+		printf("[INFO] Magnetometer detected the box is closed, flag inserted\n\r");
+#endif
+
 	} else {
 		stateInsertFlag(SFLAG_BOX_OPEN);
+#ifdef DEBUG_ACC_MAG
+		printf("[INFO] Magnetometer detected the box is open, flag inserted\n\r");
+#endif
+
 	}
 }
