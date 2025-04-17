@@ -32,10 +32,10 @@ typedef enum {
 
 
 void stateMachineInit(void);
-BoxMode runStateMachine(void);
+void runStateMachine(void);
 bool stateInsertFlag(SFlag flag);
-void stateScheduleEvents(BoxMode mode);
+void stateScheduleEvents(void);
 void clearFlags(void);
-void inturruptControl(BoxMode ourState);
+void inturruptControl(void);
 
 #endif

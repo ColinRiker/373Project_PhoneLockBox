@@ -20,7 +20,7 @@ int LCD_HEIGHT = LCD_HEIGHT_1;
 int LCD_WIDTH = LCD_WIDTH_1;
 
 void screenResolve(void) {
-	switch (state.mode) {
+	switch (state) {
 	case UNLOCKED_EMPTY_ASLEEP:
 
 		break;
