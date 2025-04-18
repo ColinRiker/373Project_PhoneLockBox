@@ -17,7 +17,10 @@ void nfcInit(void);
 bool nfcHasTarget(void);
 
 void nfcEventCallbackStart(void);
+void nfcResetPinHigh(void);
+void nfcInitSequence(void);
 void nfcEventCallbackPoll(void);
 void nfcEventCallbackRead(void);
+bool testPN532Communication(void);
 
 #endif /* INC_NFC_H_ */

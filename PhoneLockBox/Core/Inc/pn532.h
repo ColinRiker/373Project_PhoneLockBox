@@ -14,6 +14,9 @@
 
 #define PN532_FRAME_MAX_LENGTH 255
 #define PN532_DEFAULT_TIMEOUT 1000
+extern const uint8_t PN532_ACK[6];
+
+
 
 #define PN532_PREAMBLE                      (0x00)
 #define PN532_STARTCODE1                    (0x00)

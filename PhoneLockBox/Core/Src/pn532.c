@@ -434,17 +434,57 @@ void i2c_write(uint8_t* data, uint16_t count) {
 }
 
 int PN532_I2C_ReadData(uint8_t* data, uint16_t count) {
-	uint8_t status[] = {0x00};
-	uint8_t frame[count + 1];
-	i2c_read(status, sizeof(status));
-	if (status[0] != PN532_I2C_READY) {
-		return PN532_STATUS_ERROR;
-	}
-	i2c_read(frame, count + 1);
-	for (uint8_t i = 0; i < count; i++) {
-		data[i] = frame[i + 1];
-	}
-	return PN532_STATUS_OK;
+    uint8_t status[] = {0x00};
+
+    printf("[DEBUG I2C] Attempting to read status byte\n\r");
+
+    // Try reading status byte
+    HAL_StatusTypeDef hal_status = HAL_I2C_Master_Receive(&hi2c1, PN532_I2C_ADDRESS, status, sizeof(status), 100); // Use longer timeout
+
+    if (hal_status != HAL_OK) {
+        printf("[DEBUG I2C] HAL I2C receive failed with status: %d\n\r", hal_status);
+        // 0=HAL_OK, 1=HAL_ERROR, 2=HAL_BUSY, 3=HAL_TIMEOUT
+
+        // Check specific failure conditions
+        if (hal_status == HAL_ERROR) {
+            // Basic I2C error - could be address issues, bus errors, etc.
+            printf("[DEBUG I2C] Basic I2C error - check wiring, addresses, pull-ups\n\r");
+        } else if (hal_status == HAL_BUSY) {
+            printf("[DEBUG I2C] I2C bus is busy\n\r");
+        } else if (hal_status == HAL_TIMEOUT) {
+            printf("[DEBUG I2C] I2C timeout - no response from device\n\r");
+        }
+
+        data[0] = 0; // Set data to zero
+        return PN532_STATUS_ERROR;
+    }
+
+    printf("[DEBUG I2C] Status byte read: 0x%02X\n\r", status[0]);
+
+    if (status[0] != PN532_I2C_READY) {
+        printf("[DEBUG I2C] PN532 not ready (status 0x%02X)\n\r", status[0]);
+        data[0] = status[0]; // Return status in data buffer
+        return PN532_STATUS_ERROR;
+    }
+
+    // If we get here, device is ready and we can read data
+    printf("[DEBUG I2C] PN532 ready, reading data frame\n\r");
+    uint8_t frame[count + 1];
+
+    hal_status = HAL_I2C_Master_Receive(&hi2c1, PN532_I2C_ADDRESS, frame, count + 1, 100);
+
+    if (hal_status != HAL_OK) {
+        printf("[DEBUG I2C] HAL I2C data receive failed with status: %d\n\r", hal_status);
+        return PN532_STATUS_ERROR;
+    }
+
+    // Copy data to output buffer, skipping the status byte
+    for (uint8_t i = 0; i < count; i++) {
+        data[i] = frame[i + 1];
+    }
+
+    printf("[DEBUG I2C] Data read successfully\n\r");
+    return PN532_STATUS_OK;
 }
 
 int PN532_I2C_WriteData(uint8_t *data, uint16_t count) {
