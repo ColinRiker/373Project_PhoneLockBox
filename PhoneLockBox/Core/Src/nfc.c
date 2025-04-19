@@ -42,7 +42,7 @@ bool nfcHasTarget(void) {
 
 	uid_len = PN532_ReadPassiveTarget(&pn532, uid, PN532_MIFARE_ISO14443A, 1000);
 	if (uid_len == PN532_STATUS_ERROR) {
-		printf(".");
+		//printf(".");
 		return false;
 	} else {
 		printf("Found card with UID: ");
@@ -51,6 +51,14 @@ bool nfcHasTarget(void) {
 		}
 		printf("\r\n");
 		return true;
+	}
+}
+
+void nfcEventCallbackSlow(void) {
+	if (nfcHasTarget()) {
+		stateInsertFlag(SFLAG_NFC_PHONE_PRESENT);
+	} else {
+		stateInsertFlag(SFLAG_NFC_PHONE_NOT_PRESENT);
 	}
 }
 
@@ -75,8 +83,13 @@ void nfcEventCallbackStart(void) {
 
 void nfcEventCallbackPoll(void) {
 	uint8_t status[] = {0x00};
+	++poll_count;
 
-	PN532_I2C_ReadData(status, sizeof(status));
+	if (PN532_I2C_ReadData(status, sizeof(status)) != PN532_STATUS_OK) {
+#ifdef DEBUG_NFC
+		printf("[ERROR] NFC I2C poll failed\n\r");
+#endif
+	}
 
 	if (status[0] == PN532_I2C_READY) {
 		eventRegister(nfcEventCallbackRead, EVENT_NFC_READ, EVENT_SINGLE, 25, 0);
@@ -90,7 +103,8 @@ void nfcEventCallbackRead(void) {
 
 	uint32_t frame_length = PN532_ReadFrame(&pn532, buff, 4);
 
-	if (! ((buff[0] == PN532_PN532TOHOST) && (buff[1] == (PN532_COMMAND_INLISTPASSIVETARGET + 1)))){
+	if (! ((buff[0] == PN532_PN532TOHOST) &&
+			(buff[1] == (PN532_COMMAND_INLISTPASSIVETARGET + 1)))){
 		//ERROR STATE
 		//Restart?
 	}
@@ -106,6 +120,7 @@ void nfcEventCallbackRead(void) {
 	//We keep scheduling the start even incase the phone becomes present or is no longer present
 	eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 25, 0);
 }
+
 
 
 

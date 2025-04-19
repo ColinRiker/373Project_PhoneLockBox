@@ -34,6 +34,7 @@ typedef enum {
 	EVENT_AUDIO,
 	EVENT_TIMER,
 	EVENT_ACCELEROMETER,
+	EVENT_MAGNOMETER,
 } EventLabel;
 
 typedef enum {

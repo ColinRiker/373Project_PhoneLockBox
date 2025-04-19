@@ -73,9 +73,9 @@ void accDeltaEvent(void) {
 	int32_t delta = (accelerometer_state.x_componenet - prev_accelerometer_state.x_componenet) +
 			(accelerometer_state.y_componenet - prev_accelerometer_state.y_componenet) +
 			(accelerometer_state.z_componenet - prev_accelerometer_state.z_componenet);
-
+#ifdef DEBUG_ACC_MAG
 	printf("[INFO] Accelerometer Delta: %d\n\r", delta);
-
+#endif
 	if (abs(delta) >= ACCELERATION_WAKE_DELTA) {
 		stateInsertFlag(SFLAG_ACC_BOX_MOVED);
 #ifdef DEBUG_ACC_MAG

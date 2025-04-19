@@ -338,18 +338,18 @@ void stateScheduleEvents() {
 		break;
 
 	case UNLOCKED_EMPTY_AWAKE:
-		eventRegister(nfcEventCallbackStart, EVENT_NFC_START_READ, EVENT_SINGLE, 1, 0);
-		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, 5000, 0);
+		eventRegister(nfcEventCallbackSlow, EVENT_NFC_READ, EVENT_DELTA, 1000, 0);
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_B:
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
@@ -365,12 +365,12 @@ void stateScheduleEvents() {
 		break;
 
 	case LOCKED_FULL_AWAKE:
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 10, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;

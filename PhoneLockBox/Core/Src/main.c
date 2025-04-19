@@ -150,7 +150,7 @@ int main(void)
 	/* USER CODE BEGIN 2 */
 	ILI9341_Init();//initial driver setup to drive ili9341
 	ILI9341_Fill_Screen(WHITE);
-
+	PN532_I2C_Init(&pn532);
 	accInit();
 	audioInit();
 	magInit();
