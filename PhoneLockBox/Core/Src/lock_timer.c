@@ -11,13 +11,13 @@
 
 #include "stm32l4xx_hal.h"
 
-extern bool master_set_done;
+extern bool master_timer_done;
 extern TIM_HandleTypeDef htim2;
 
 
-void lockTimerStartEvent(void) {
+void lockTimerStart(void) {
 	HAL_TIM_Base_Start_IT(&htim2);
-	master_set_done = false;
+	master_timer_done = false;
 }
 
 uint32_t lockTimerGetTime(void){

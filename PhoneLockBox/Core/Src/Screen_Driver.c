@@ -66,15 +66,21 @@ void screenResolve(void) {
 
         //level 1
         w = (320 - get_text_width("Press Button To Power Off", FONT4))/2;
-        ILI9341_Draw_Text("Press Button To Power Off", FONT4, w, 80, WHITE, BACKG);
+        ILI9341_Draw_Text("Press Button To Power Off", FONT4, w, 70, WHITE, BACKG);
 
         //level 2
         w = (320 - get_text_width("Turn Dial to Set time", FONT4))/2;
-        ILI9341_Draw_Text("Turn Dial to Set time", FONT4, w, 120, WHITE, BACKG);
+        ILI9341_Draw_Text("Turn Dial to Set time", FONT4, w, 100, WHITE, BACKG);
 
         //level 3
+        //getting time here
+        w = (320 - get_text_width(get_time(), FONT4))/2;
+        ILI9341_Draw_Text(get_time(), FONT4, w, 130, WHITE, BACKG);
+
+        //level 4
         w = (320 - get_text_width("Put phone in box to enable locking", FONT4))/2;
         ILI9341_Draw_Text("Put phone in box to enable locking", FONT4, w, 160, WHITE, BACKG);
+
         break;
 
     case UNLOCKED_FULL_AWAKE_FUNC_A:
@@ -84,21 +90,16 @@ void screenResolve(void) {
 
         //level 1
         w = (320 - get_text_width("Power Off [SELECTED]", FONT4))/2;
-        ILI9341_Draw_Text("Power Off [SELECTED]", FONT4, w, 70, WHITE, BACKG);
+        ILI9341_Draw_Text("Power Off [SELECTED]", FONT4, w, 80, WHITE, BACKG);
 
         //level 2
         w = (320 - get_text_width("Lock [NOT SELECTED]", FONT4))/2;
-        ILI9341_Draw_Text("Lock [NOT SELECTED]", FONT4, w, 100, WHITE, BACKG);
+        ILI9341_Draw_Text("Lock [NOT SELECTED]", FONT4, w, 120, WHITE, BACKG);
 
         //level 3
-        w = (320 - get_text_width("Turn Dial to Set Time", FONT4))/2;
-        ILI9341_Draw_Text("Turn Dial to Set Time", FONT4, w, 130, WHITE, BACKG);
-
-        //level 4
         //getting time here
         w = (320 - get_text_width(get_time(), FONT4))/2;
         ILI9341_Draw_Text(get_time(), FONT4, w, 160, WHITE, BACKG);
-
 
         break;
 
@@ -109,20 +110,13 @@ void screenResolve(void) {
 
         //level 1
         w = (320 - get_text_width("Power Off [NOT SELECTED]", FONT4))/2;
-        ILI9341_Draw_Text("Power Off [NOT SELECTED]", FONT4, w, 70, WHITE, BACKG);
-
+        ILI9341_Draw_Text("Power Off [NOT SELECTED]", FONT4, w, 80, WHITE, BACKG);
 
         //level 2
         w = (320 - get_text_width("Lock [SELECTED]", FONT4))/2;
-        ILI9341_Draw_Text("Lock [SELECTED]", FONT4, w, 100, WHITE, BACKG);
-
+        ILI9341_Draw_Text("Lock [SELECTED]", FONT4, w, 120, WHITE, BACKG);
 
         //level 3
-        w = (320 - get_text_width("Turn Dial to Set time", FONT4))/2;
-        ILI9341_Draw_Text("Turn Dial to Set time", FONT4, w, 130, WHITE, BACKG);
-
-
-        //level 4
         //getting time here
         w = (320 - get_text_width(get_time(), FONT4))/2;
         ILI9341_Draw_Text(get_time(), FONT4, w, 160, WHITE, BACKG);

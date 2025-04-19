@@ -8,9 +8,9 @@
 #ifndef INC_AUDIO_H_
 #define INC_AUDIO_H_
 
-#define MAX_ENTRIES 20
-#define TIME_MIN_THRESH 0.4
-#define TIME_MAX_THRESH 0.9
+#define MAX_ENTRIES 100
+#define TIME_MIN_THRESH 0.002
+#define TIME_MAX_THRESH 0.005
 
 #include <stdbool.h>
 

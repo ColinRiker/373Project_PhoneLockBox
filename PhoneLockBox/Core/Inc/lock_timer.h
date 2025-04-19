@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-void lockTimerStartEvent(void);
+void lockTimerStart(void);
 uint32_t lockTimerGetTime(void);
 void lockTimerSetTime(uint32_t time);
 void lockTimerCancel(void);

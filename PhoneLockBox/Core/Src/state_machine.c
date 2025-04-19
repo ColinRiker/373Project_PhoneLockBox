@@ -17,6 +17,7 @@
 #include "rotary_encoder.h"
 #include "shared.h"
 #include "main.h"
+#include "lock_timer.h"
 
 #define MINUTE 60000
 
@@ -116,7 +117,7 @@ void inturruptControl(void) {
 
 
 void stateMachineInit(void) {
-	state = UNLOCKED_EMPTY_ASLEEP;
+	state = UNLOCKED_FULL_AWAKE_FUNC_A;
 }
 
 void runStateMachine(void) {
@@ -244,6 +245,8 @@ void runStateMachine(void) {
 		} // if it's been a minute, assume they are choosing to ignore and go bck to locked (but awake)
 		else if(hasFlag(SFLAG_TIMER_COMPLETE)) {
 			next=LOCKED_FULL_AWAKE;
+		}else if (hasFlag(SFLAG_ROTENC_INTERRUPT)){
+			next=LOCKED_FULL_AWAKE;
 		}
 		break;
 	case LOCKED_FULL_ASLEEP:
@@ -268,7 +271,7 @@ void runStateMachine(void) {
 		//if there is a match, we move to prompt user if they want to unlock
 		else if(hasFlag(SFLAG_AUDIO_MATCH)) {
 			next = LOCKED_FULL_NOTIFICATION_FUNC_B;
-		} else { //otherwise (if no match) we move back to locked state
+		} else if(hasFlag(SFLAG_AUDIO_NO_MATCH)){ //otherwise (if no match) we move back to locked state
 			next = LOCKED_FULL_AWAKE;
 		}
 
@@ -283,7 +286,7 @@ void runStateMachine(void) {
 			next = LOCKED_FULL_NOTIFICATION_FUNC_B;
 		}
 		//if there was no audio match, go back to sleep
-		else  {
+		else if(hasFlag(SFLAG_AUDIO_NO_MATCH)) {
 			next = LOCKED_FULL_ASLEEP;
 		}
 		break;
@@ -315,6 +318,10 @@ void runStateMachine(void) {
 #ifdef DEBUG_STATE_CONTROLLER
 		printf("\n[Info] --- State transition: %s → %s ---\n\r", stateToStr(state), stateToStr(next));
 #endif
+		if (state == UNLOCKED_TO_LOCKED_AWAKE && next == LOCKED_FULL_AWAKE) {
+			lockTimerStart();
+		};
+
 		state = next;
 
 		/* State Setup */
@@ -338,25 +345,25 @@ void stateScheduleEvents() {
 		break;
 
 	case UNLOCKED_EMPTY_AWAKE:
-		eventRegister(nfcEventCallbackSlow, EVENT_NFC_READ, EVENT_DELTA, 1000, 0);
+		//eventRegister(nfcEventCallbackSlow, EVENT_NFC_READ, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
-		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_B:
-		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case UNLOCKED_FULL_ASLEEP:
 		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
@@ -365,30 +372,30 @@ void stateScheduleEvents() {
 		break;
 
 	case LOCKED_FULL_AWAKE:
-		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
-		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_FULL_ASLEEP:
 		eventRegister(accDeltaEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		break;
 
 	case LOCKED_MONITOR_AWAKE:
-		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 10, 0);
+		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 1000 , 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(audioEventCallback, EVENT_AUDIO, EVENT_DELTA, 1, 0);
 		break;
@@ -399,6 +406,9 @@ void stateScheduleEvents() {
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
 		eventRegister(audioEventCallback, EVENT_AUDIO, EVENT_DELTA, 1, 0);
+		break;
+	case EMERGENCY_OPEN:
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, 5000, 0);
 		break;
 
 	default:
