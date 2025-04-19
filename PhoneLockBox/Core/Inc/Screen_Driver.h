@@ -144,7 +144,10 @@ void ILI9341_Set_Address(uint16_t X1, uint16_t Y1, uint16_t X2, uint16_t Y2);
 void ILI9341_Reset(void);
 void ILI9341_Set_Rotation(uint8_t Rotation);
 
+//all of our funcs
 void screenResolve(void);
+void screenResolveDebug(void);
+char* get_time(void);
 
 void ILI9341_Enable(void);
 void ILI9341_Init(void);

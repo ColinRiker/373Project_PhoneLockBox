@@ -20,7 +20,232 @@ extern SPI_HandleTypeDef hspi1;
 int LCD_HEIGHT = LCD_HEIGHT_1;
 int LCD_WIDTH = LCD_WIDTH_1;
 
+#include <stdio.h>
+#include "lock_timer.h"
+
+
+char* get_time(void) {
+    static char time_str[16]; //buffer to put the time string in
+    uint32_t remaining_time = lockTimerGetTime(); // get time from lock timer (returns numb milliseconds)
+
+    // calculate numb hours and minutes
+    uint32_t total_seconds = remaining_time / 1000;
+    uint32_t hours = total_seconds / 3600;
+    uint32_t minutes = (total_seconds % 3600) / 60;
+
+    // format time as "HH:MM"
+    sprintf(time_str, "%02lu:%02lu", hours, minutes);
+
+    return time_str;
+}
+
 void screenResolve(void) {
+    int w = 0;
+    switch (state) {
+
+    case UNLOCKED_EMPTY_ASLEEP:
+        // turn OFF
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
+        ILI9341_Fill_Screen(BACKG);
+        //nothing to display when we are sleep
+        break;
+
+    case UNLOCKED_ASLEEP_TO_AWAKE:
+    	//turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+        w = (320 - get_text_width("Hello World", FONT4))/2;
+        //trying to initialize this to the middle of the screen
+        ILI9341_Draw_Text("Hello World!", FONT4, w, 120, WHITE, BACKG);
+        break;
+
+    case UNLOCKED_EMPTY_AWAKE:
+    	//turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+
+        //level 1
+        w = (320 - get_text_width("Press Button To Power Off", FONT4))/2;
+        ILI9341_Draw_Text("Press Button To Power Off", FONT4, w, 80, WHITE, BACKG);
+
+        //level 2
+        w = (320 - get_text_width("Turn Dial to Set time", FONT4))/2;
+        ILI9341_Draw_Text("Turn Dial to Set time", FONT4, w, 120, WHITE, BACKG);
+
+        //level 3
+        w = (320 - get_text_width("Put phone in box to enable locking", FONT4))/2;
+        ILI9341_Draw_Text("Put phone in box to enable locking", FONT4, w, 160, WHITE, BACKG);
+        break;
+
+    case UNLOCKED_FULL_AWAKE_FUNC_A:
+        //turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+
+        //level 1
+        w = (320 - get_text_width("Power Off [SELECTED]", FONT4))/2;
+        ILI9341_Draw_Text("Power Off [SELECTED]", FONT4, w, 70, WHITE, BACKG);
+
+        //level 2
+        w = (320 - get_text_width("Lock [NOT SELECTED]", FONT4))/2;
+        ILI9341_Draw_Text("Lock [NOT SELECTED]", FONT4, w, 100, WHITE, BACKG);
+
+        //level 3
+        w = (320 - get_text_width("Turn Dial to Set Time", FONT4))/2;
+        ILI9341_Draw_Text("Turn Dial to Set Time", FONT4, w, 130, WHITE, BACKG);
+
+        //level 4
+        //getting time here
+        w = (320 - get_text_width(get_time(), FONT4))/2;
+        ILI9341_Draw_Text(get_time(), FONT4, w, 160, WHITE, BACKG);
+
+
+        break;
+
+    case UNLOCKED_FULL_AWAKE_FUNC_B:
+        // turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+
+        //level 1
+        w = (320 - get_text_width("Power Off [NOT SELECTED]", FONT4))/2;
+        ILI9341_Draw_Text("Power Off [NOT SELECTED]", FONT4, w, 70, WHITE, BACKG);
+
+
+        //level 2
+        w = (320 - get_text_width("Lock [SELECTED]", FONT4))/2;
+        ILI9341_Draw_Text("Lock [SELECTED]", FONT4, w, 100, WHITE, BACKG);
+
+
+        //level 3
+        w = (320 - get_text_width("Turn Dial to Set time", FONT4))/2;
+        ILI9341_Draw_Text("Turn Dial to Set time", FONT4, w, 130, WHITE, BACKG);
+
+
+        //level 4
+        //getting time here
+        w = (320 - get_text_width(get_time(), FONT4))/2;
+        ILI9341_Draw_Text(get_time(), FONT4, w, 160, WHITE, BACKG);
+
+        break;
+
+    case UNLOCKED_FULL_ASLEEP:
+        //turn OFF
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
+        ILI9341_Fill_Screen(BACKG);
+        // nothing to display when we are sleep
+        break;
+
+    case UNLOCKED_TO_LOCKED_AWAKE:
+        //turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+
+        //level 1
+        w = (320 - get_text_width("Locking, press button to cancel", FONT4))/2;
+        ILI9341_Draw_Text("Locking, press button to cancel", FONT4, w, 120, WHITE, BACKG);
+        break;
+
+    case LOCKED_FULL_AWAKE:
+        //turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+
+        //level 1
+        w = (320 - get_text_width("Time Remaining", FONT4))/2;
+        ILI9341_Draw_Text("Time Remaining", FONT4, w, 100, WHITE, BACKG);
+
+        //level 2
+        //getting time here
+        w = (320 - get_text_width(get_time(), FONT4))/2;
+        ILI9341_Draw_Text(get_time(), FONT4, w, 140, WHITE, BACKG);
+        break;
+
+    case LOCKED_FULL_ASLEEP:
+        //turn OFF
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
+        ILI9341_Fill_Screen(BACKG);
+        // No text is displayed when screen is off
+        break;
+
+    case LOCKED_MONITOR_AWAKE:
+        // turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+
+        //level 1
+        w = (320 - get_text_width("Time Remaining", FONT4))/2;
+        ILI9341_Draw_Text("Time Remaining", FONT4, w, 100, WHITE, BACKG);
+
+        //level 2
+        //getting time here
+        w = (320 - get_text_width(get_time(), FONT4))/2;
+        ILI9341_Draw_Text(get_time(), FONT4, w, 140, WHITE, BACKG);
+        break;
+
+    case LOCKED_MONITOR_ASLEEP:
+        // MOSFET: ON, SCREEN: OFF
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
+        ILI9341_Fill_Screen(BACKG);
+        //nothing to display when we are sleep
+        break;
+
+    case LOCKED_FULL_NOTIFICATION_FUNC_A:
+        // turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+
+        //level 1
+        w = (320 - get_text_width("Incoming call, do you want to unlock?", FONT4))/2;
+        ILI9341_Draw_Text("Incoming call, do you want to unlock?", FONT4, w, 80, WHITE, BACKG);
+
+        //level 2
+        w = (320 - get_text_width("Unlock [SELECTED]", FONT4))/2;
+        ILI9341_Draw_Text("Unlock [SELECTED]", FONT4, w, 120, WHITE, BACKG);
+
+        //level 3
+        w = (320 - get_text_width("Ignore [NOT SELECTED]", FONT4))/2;
+        ILI9341_Draw_Text("Ignore [NOT SELECTED]", FONT4, w, 160, WHITE, BACKG);
+        break;
+
+    case LOCKED_FULL_NOTIFICATION_FUNC_B:
+        // turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+
+        //level 1
+        w = (320 - get_text_width("Incoming call, do you want to unlock?", FONT4))/2;
+        ILI9341_Draw_Text("Incoming call, do you want to unlock?", FONT4, w, 80, WHITE, BACKG);
+
+        //level 2
+        w = (320 - get_text_width("Unlock [NOT SELECTED]", FONT4))/2;
+        ILI9341_Draw_Text("Unlock [NOT SELECTED]", FONT4, w, 120, WHITE, BACKG);
+
+        //level 3
+        w = (320 - get_text_width("Ignore [SELECTED]", FONT4))/2;
+        ILI9341_Draw_Text("Ignore [SELECTED]", FONT4, w, 160, WHITE, BACKG);
+        break;
+
+    case EMERGENCY_OPEN:
+        // turn on
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+
+        //level 1 scary message
+        w = (320 - get_text_width("Box Forced Open", FONT4))/2;
+        ILI9341_Draw_Text("Box Forced Open", FONT4, w, 120, WHITE, BACKG);
+        break;
+
+    default:
+        HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+        ILI9341_Fill_Screen(BACKG);
+        w = (320 - get_text_width("default", FONT4))/2;
+        ILI9341_Draw_Text("default", FONT4, w, 120, WHITE, BACKG);
+        break;
+    }
+}
+
+void screenResolveDebug(void) {
 
 	int w = 0;
 	switch (state) {
