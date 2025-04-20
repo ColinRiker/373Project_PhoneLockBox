@@ -54,6 +54,7 @@ typedef struct {
 } Vector3D;
 
 /* Global Variables */
+extern BoxState previous;
 extern BoxState state;
 extern BoxState next_state;
 /* End Global Variables */

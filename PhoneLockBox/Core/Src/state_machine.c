@@ -21,6 +21,7 @@
 
 #define MINUTE 60000
 
+BoxState previous;
 BoxState state;
 SFlag flags[MAX_FLAGS];
 bool master_timer_done; //Master time is the lock timer
@@ -321,7 +322,7 @@ void runStateMachine(void) {
 		if (state == UNLOCKED_TO_LOCKED_AWAKE && next == LOCKED_FULL_AWAKE) {
 			lockTimerStart();
 		};
-
+		previous = state;
 		state = next;
 
 		/* State Setup */
