@@ -360,8 +360,8 @@ void stateScheduleEvents() {
 		break;
 
 	case UNLOCKED_EMPTY_AWAKE:
-		//eventRegister(nfcEventCallbackSlow, EVENT_NFC_READ, EVENT_DELTA, 5000, 0);
-		//eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
+		eventRegister(nfcEventCallbackSlow, EVENT_NFC_READ, EVENT_DELTA, 5000, 0);
+		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_A:

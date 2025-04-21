@@ -185,7 +185,7 @@ int main(void)
 			int32_t delta = rotencGetDelta();
 
 			if (delta) { //Check mag^2 of delta
-				printf("DELTA: %ld\r\n", delta);
+				//printf("DELTA: %ld\r\n", delta);
 				lockTimerSetTime(lockTimerGetTime() + (delta * 60000));
 				UEA_Timer_Update();
 

@@ -37,7 +37,7 @@ int32_t rotencGetDelta(void) {
 	int32_t cnt = TIM1->CNT;
 
 	if (cnt != prev_cnt) {
-		printf("CNT: %ld, PREV: %ld\n\r", cnt, prev_cnt);
+		//printf("CNT: %ld, PREV: %ld\n\r", cnt, prev_cnt);
 		uint32_t delta = cnt - prev_cnt;
 		prev_cnt = cnt;
 
