@@ -14,8 +14,18 @@
 extern bool master_timer_done;
 extern TIM_HandleTypeDef htim2;
 
+uint32_t max_time_ms;
+
+void lockTimerInit(void) {
+	lockDisenage();
+	lockTimerCancel();
+	lockTimerSetTime(10000);
+	master_timer_done = false;
+}
+
 
 void lockTimerStart(void) {
+	max_time_ms = lockTimerGetTime();
 	HAL_TIM_Base_Start_IT(&htim2);
 	master_timer_done = false;
 }
@@ -24,7 +34,10 @@ uint32_t lockTimerGetTime(void){
 	return TIM2->CNT;
 }
 
-void lockTimerSetTime(uint32_t time) {
+void lockTimerSetTime(int32_t time) {
+	if (time < 0)
+		time = 0;
+
 	TIM2->CNT = time;
 }
 
