@@ -56,9 +56,11 @@ bool nfcHasTarget(void) {
 
 void nfcEventCallbackSlow(void) {
 	if (nfcHasTarget()) {
+		stateRemoveFlag(SFLAG_NFC_PHONE_NOT_PRESENT);
 		stateInsertFlag(SFLAG_NFC_PHONE_PRESENT);
 	} else {
 		stateInsertFlag(SFLAG_NFC_PHONE_NOT_PRESENT);
+		stateRemoveFlag(SFLAG_NFC_PHONE_PRESENT);
 	}
 }
 

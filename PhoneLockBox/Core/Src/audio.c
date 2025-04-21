@@ -85,8 +85,10 @@ void audioEventCallback(void) {
 
 	if(audio_count == MAX_ENTRIES){
 		if (audioMatch()){
+			stateRemoveFlag(SFLAG_AUDIO_NO_MATCH);
 			stateInsertFlag(SFLAG_AUDIO_MATCH);
 		} else {
+			stateRemoveFlag(SFLAG_AUDIO_MATCH);
 			stateInsertFlag(SFLAG_AUDIO_NO_MATCH);
 		}
 	}

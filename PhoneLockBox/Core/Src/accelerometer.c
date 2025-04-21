@@ -130,12 +130,14 @@ void magBoxStatusEvent(void) {
 	int magnitude = abs(vec.x_componenet) + abs(vec.y_componenet) + abs(vec.z_componenet);
 
 	if (magnitude > MAGNOMETER_THRESHOLD) {  // not sure what this value needs to be
+		stateRemoveFlag(SFLAG_BOX_CLOSED);
 		stateInsertFlag(SFLAG_BOX_OPEN);
 #ifdef DEBUG_ACC_MAG
 		printf("[INFO] Magnetometer detected the box is closed, flag inserted\n\r");
 #endif
 
 	} else {
+		stateRemoveFlag(SFLAG_BOX_OPEN);
 		stateInsertFlag(SFLAG_BOX_CLOSED);
 #ifdef DEBUG_ACC_MAG
 		printf("[INFO] Magnetometer detected the box is open, flag inserted\n\r");
