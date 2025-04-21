@@ -84,7 +84,7 @@ void screenResolve(void) {
 	int w = 0;
 
 	bool full_refresh = (previous != state);
-
+	uint32_t prev_time_ms=0;
 	static char prev_time_str[16] = {0}; // For tracking time changes
 
 	char* current_time = NULL;
@@ -100,7 +100,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
 
-		ILI9341_Fill_Screen(BACKG);
 
 		//nothing to display when we are sleep
 
@@ -115,11 +114,11 @@ void screenResolve(void) {
 
 		ILI9341_Fill_Screen(BACKG);
 
-		w = (320 - get_text_width("Hello World", FONT4))/2;
+		w = (320 - get_text_width("Powering On", FONT4))/2;
 
 		//trying to initialize this to the middle of the screen
 
-		ILI9341_Draw_Text("Hello World!", FONT4, w, 120, WHITE, BACKG);
+		ILI9341_Draw_Text("Powering On", FONT4, w, 120, WHITE, BACKG);
 
 		break;
 
@@ -129,6 +128,7 @@ void screenResolve(void) {
 		//turn on
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+
 
 		if (full_refresh) {
 
@@ -170,6 +170,8 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Phone(10, 10, 20, false); // No phone
 
+
+
 		}
 
 
@@ -177,6 +179,8 @@ void screenResolve(void) {
 		//level 3 - time display with partial refresh
 
 		current_time = get_time();
+
+		uint32_t time_ms = lockTimerGetTime();
 
 		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
 
@@ -212,6 +216,7 @@ void screenResolve(void) {
 
 		}
 
+
 		break;
 
 
@@ -221,23 +226,23 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh) {
+		if (full_refresh && previous !=UNLOCKED_FULL_AWAKE_FUNC_B) {
 
 			ILI9341_Fill_Screen(BACKG);
 
 
 			//level 1
 
-			w = (320 - get_text_width("Power Off [SELECTED]", FONT4))/2;
+			w = (320 - get_text_width("Power Off", FONT4))/2;
 
-			ILI9341_Draw_Text("Power Off [SELECTED]", FONT4, w, 80, WHITE, BACKG);
+			ILI9341_Draw_Text("Power Off", FONT4, w, 80, GREEN, BACKG);
 
 
 			//level 2
 
-			w = (320 - get_text_width("Lock [NOT SELECTED]", FONT4))/2;
+			w = (320 - get_text_width("Lock", FONT4))/2;
 
-			ILI9341_Draw_Text("Lock [NOT SELECTED]", FONT4, w, 120, WHITE, BACKG);
+			ILI9341_Draw_Text("Lock", FONT4, w, 120, RED, BACKG);
 
 
 
@@ -250,45 +255,6 @@ void screenResolve(void) {
 		}
 
 
-
-		//level 3 - time display with partial refresh
-
-		current_time = get_time();
-
-		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
-
-			// Clear previous time area
-
-			int time_width = get_text_width(current_time, FONT4);
-
-			int time_height = get_text_height(FONT4);
-
-			int time_x = (320 - time_width)/2;
-
-			int time_y = 160;
-
-
-
-			// Clear old time area
-
-			ILI9341_Draw_Rectangle(time_x - 5, time_y - 5,
-
-					time_width + 10, time_height + 10, BACKG);
-
-
-
-			// Draw new time
-
-			ILI9341_Draw_Text(current_time, FONT4, time_x, time_y, WHITE, BACKG);
-
-
-
-			// Save current time for next comparison
-
-			strcpy(prev_time_str, current_time);
-
-		}
-
 		break;
 
 
@@ -298,23 +264,23 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh) {
+		if (full_refresh && previous != UNLOCKED_FULL_AWAKE_FUNC_A) {
 
 			ILI9341_Fill_Screen(BACKG);
 
 
 			//level 1
 
-			w = (320 - get_text_width("Power Off [NOT SELECTED]", FONT4))/2;
+			w = (320 - get_text_width("Power Off", FONT4))/2;
 
-			ILI9341_Draw_Text("Power Off [NOT SELECTED]", FONT4, w, 80, WHITE, BACKG);
+			ILI9341_Draw_Text("Power Off", FONT4, w, 80, RED, BACKG);
 
 
 			//level 2
 
-			w = (320 - get_text_width("Lock [SELECTED]", FONT4))/2;
+			w = (320 - get_text_width("Lock", FONT4))/2;
 
-			ILI9341_Draw_Text("Lock [SELECTED]", FONT4, w, 120, WHITE, BACKG);
+			ILI9341_Draw_Text("Lock", FONT4, w, 120, GREEN, BACKG);
 
 
 
@@ -377,6 +343,8 @@ void screenResolve(void) {
 			strcpy(prev_time_str, current_time);
 
 		}
+		ILI9341_Draw_Text("UNLOCKED_FULL_AWAKE_FUNC_B", FONT4, 0, 100, WHITE, BACKG);
+
 
 		break;
 
@@ -387,7 +355,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
 
-		ILI9341_Fill_Screen(BACKG);
 
 		// nothing to display when we are sleep
 
@@ -498,7 +465,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
 
-		ILI9341_Fill_Screen(BACKG);
 
 		// no text is displayed when screen is off
 
@@ -578,8 +544,6 @@ void screenResolve(void) {
 		// MOSFET: ON, SCREEN: OFF
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
-
-		ILI9341_Fill_Screen(BACKG);
 
 		//nothing to display when we are sleep
 
