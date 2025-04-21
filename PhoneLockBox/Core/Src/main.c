@@ -191,6 +191,10 @@ int main(void)
 
 			}
 		}
+		if(state == LOCKED_FULL_AWAKE || state == LOCKED_MONITOR_AWAKE || state == LOCKED_FULL_NOTIFICATION_FUNC_A || state == LOCKED_FULL_NOTIFICATION_FUNC_B){
+			Ring_Update();
+		}
+
 
     /* USER CODE END WHILE */
 
