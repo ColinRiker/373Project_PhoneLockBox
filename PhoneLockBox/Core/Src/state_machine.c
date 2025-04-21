@@ -33,6 +33,16 @@ bool hasFlag(SFlag flag) {
 	return false;
 }
 
+void stateRemoveFlag(SFlag flag) {
+	uint8_t empty_idx = MAX_FLAGS;
+
+	for(uint8_t i = 0; i < MAX_FLAGS; ++i) {
+		if (flags[i] == flag) {
+			flags[i] = SFLAG_NULL;
+		}
+	}
+}
+
 bool stateInsertFlag(SFlag flag) {
 #ifdef DEBUG_STATE_CONTROLLER
 	printf("[INFO] Inserting State flag: %s\n\r", SFlagToStr(flag));
