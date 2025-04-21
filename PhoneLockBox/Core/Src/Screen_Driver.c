@@ -48,11 +48,9 @@ int LCD_WIDTH = LCD_WIDTH_1;
 
 // function to get formatted time string
 
-char* get_time(void) {
+char* get_time_str(uint32_t ms_time) {
 
 	static char time_str[16]; // static buffer for the time string
-
-	uint32_t ms_time = lockTimerGetTime(); // get time in milliseconds
 
 
 
@@ -78,6 +76,33 @@ char* get_time(void) {
 
 }
 
+char* get_time() {
+
+	static char time_str[16]; // static buffer for the time string
+	uint32_t ms_time = lockTimerGetTime();
+
+
+	// convert milliseconds to hours, minutes, and seconds
+
+	uint32_t total_seconds = ms_time / 1000;
+
+	uint32_t hours = total_seconds / 3600;
+
+	uint32_t minutes = (total_seconds % 3600) / 60;
+
+	uint32_t seconds = total_seconds % 60;
+
+
+
+	// format the time as "HH:MM:SS"
+
+	sprintf(time_str, "%02lu:%02lu:%02lu", hours, minutes, seconds);
+
+
+
+	return time_str;
+
+}
 
 void screenResolve(void) {
 
@@ -134,26 +159,25 @@ void screenResolve(void) {
 
 			ILI9341_Fill_Screen(BACKG);
 
-
 			//level 1
 
 			w = (320 - get_text_width("Press Button To Power Off", FONT4))/2;
 
-			ILI9341_Draw_Text("Press Button To Power Off", FONT4, w, 80, WHITE, BACKG);
+			ILI9341_Draw_Text("Press Button To Power Off", FONT4, w, 10, WHITE, BACKG);
 
 
 			//level 2
 
 			w = (320 - get_text_width("Turn Dial to Set time", FONT4))/2;
 
-			ILI9341_Draw_Text("Turn Dial to Set time", FONT4, w, 120, WHITE, BACKG);
+			ILI9341_Draw_Text("Turn Dial to Set time", FONT4, w, 30, WHITE, BACKG);
 
 
 			//level 3 (new time display)
 
-			w = (320 - get_text_width("Current Time:", FONT4))/2;
-
-			ILI9341_Draw_Text("Current Time:", FONT4, w, 160, WHITE, BACKG);
+//			w = (320 - get_text_width("Current Time:", FONT4))/2;
+//
+//			ILI9341_Draw_Text("Current Time:", FONT4, w, 160, WHITE, BACKG);
 
 
 			//level 4 (moved from level 3)
@@ -182,11 +206,13 @@ void screenResolve(void) {
 
 		uint32_t time_ms = lockTimerGetTime();
 
-		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
+		if (prev_time_ms != time_ms) {
 
 			// clear previous time area
 
-			int time_width = get_text_width(current_time, FONT4);
+			char* time_str = get_time_str(time_ms);
+
+			int time_width = get_text_width(time_str, FONT4);
 
 			int time_height = get_text_height(FONT4);
 
