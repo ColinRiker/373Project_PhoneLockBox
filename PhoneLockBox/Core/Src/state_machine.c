@@ -162,8 +162,8 @@ void runStateMachine(void) {
 		// PRIORITIZE MOVING TO AWAKE FUNC B
 		else if (hasFlag(SFLAG_ROTENC_ROTATED)) {
 			next=UNLOCKED_FULL_AWAKE_FUNC_B;
-		} //if we can't move to that, we move back to sleep
-		else if(hasFlag(SFLAG_TIMER_COMPLETE)) {
+		} //otherwise we are just charging!
+		else if(hasFlag(SFLAG_TIMER_COMPLETE) || hasFlag(SFLAG_ROTENC_INTERRUPT)) {
 			next=UNLOCKED_FULL_ASLEEP;
 		}
 		break;
