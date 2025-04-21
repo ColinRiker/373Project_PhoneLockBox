@@ -67,7 +67,6 @@ void inturruptControl(void) {
 	switch(state) {
 	//all states that need to have button DISABLED
 	case UNLOCKED_ASLEEP_TO_AWAKE:
-	case UNLOCKED_FULL_AWAKE_FUNC_A:
 	case LOCKED_FULL_AWAKE:
 	case LOCKED_MONITOR_AWAKE:
 	case LOCKED_MONITOR_ASLEEP:
@@ -79,6 +78,7 @@ void inturruptControl(void) {
 	case UNLOCKED_EMPTY_ASLEEP:
 	case UNLOCKED_EMPTY_AWAKE:
 	case UNLOCKED_FULL_ASLEEP:
+	case UNLOCKED_FULL_AWAKE_FUNC_A:
 	case UNLOCKED_FULL_AWAKE_FUNC_B:
 	case UNLOCKED_TO_LOCKED_AWAKE:
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
