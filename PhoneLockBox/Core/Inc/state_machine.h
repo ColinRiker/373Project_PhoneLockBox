@@ -33,6 +33,7 @@ typedef enum {
 
 void stateMachineInit(void);
 void runStateMachine(void);
+void stateTransitionCleanup(BoxState next);
 bool stateInsertFlag(SFlag flag);
 void stateScheduleEvents(void);
 void clearFlags(void);

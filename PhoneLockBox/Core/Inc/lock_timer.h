@@ -15,4 +15,7 @@ uint32_t lockTimerGetTime(void);
 void lockTimerSetTime(uint32_t time);
 void lockTimerCancel(void);
 
+void lockEngage(void);
+void lockDisenage(void);
+
 #endif /* INC_LOCK_TIMER_H_ */
