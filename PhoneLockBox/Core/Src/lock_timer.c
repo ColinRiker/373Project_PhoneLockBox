@@ -31,3 +31,10 @@ void lockTimerSetTime(uint32_t time) {
 void lockTimerCancel(void) {
 	HAL_TIM_Base_Stop_IT(&htim2);
 }
+
+void lockEngage(void) {
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, 1);
+}
+void lockDisenage(void) {
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, 0);
+}

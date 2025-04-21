@@ -111,8 +111,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim == &htim3 ) {
 		++time_ms;
 	} else if (htim == &htim2) {
-		printf("!TIMER DONE UNLOCKING!");
-		HAL_Delay(2000);
 		master_timer_done = true;
 	}
 }

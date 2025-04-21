@@ -307,7 +307,7 @@ void runStateMachine(void) {
 	if(master_timer_done) { //if we trigger overall timer
 		next = UNLOCKED_FULL_AWAKE_FUNC_A;
 		//reset
-		master_timer_done=false;
+		master_timer_done = false;
 	}
 
 	// update state if changed
@@ -319,9 +319,9 @@ void runStateMachine(void) {
 #ifdef DEBUG_STATE_CONTROLLER
 		printf("\n[Info] --- State transition: %s → %s ---\n\r", stateToStr(state), stateToStr(next));
 #endif
-		if (state == UNLOCKED_TO_LOCKED_AWAKE && next == LOCKED_FULL_AWAKE) {
-			lockTimerStart();
-		};
+
+		stateTransitionCleanup(next);
+
 		previous = state;
 		state = next;
 
@@ -331,6 +331,20 @@ void runStateMachine(void) {
 		screenResolve();
 	}
 
+}
+
+void stateTransitionCleanup (BoxState next) {
+	//Transition Specific Logic
+	if (state == UNLOCKED_TO_LOCKED_AWAKE && next == LOCKED_FULL_AWAKE) {
+		lockTimerStart();
+		lockEngage();
+	} else if (( state == LOCKED_FULL_AWAKE || state == LOCKED_FULL_ASLEEP) && next == UNLOCKED_FULL_AWAKE_FUNC_B) {
+		lockTimerCancel();
+		lockDisenage();
+	} else if (next == EMERGENCY_OPEN) {
+		lockTimerCancel();
+		lockDisenage();
+	}
 }
 
 
