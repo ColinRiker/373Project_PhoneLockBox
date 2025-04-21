@@ -16,7 +16,7 @@
 
 
 extern SPI_HandleTypeDef hspi1;
-
+extern uint32_t max_time_ms;
 
 int LCD_HEIGHT = LCD_HEIGHT_1;
 int LCD_WIDTH = LCD_WIDTH_1;
@@ -151,6 +151,20 @@ void screenResolve(void) {
 		ILI9341_Draw_Lock(290, 20, 20, YELLOW, false); // Unlocked
 		ILI9341_Draw_Phone(10, 10, 20, false); // No phone
 
+
+		time_width = get_text_width("00:00:00", FONT4);
+
+		time_height = get_text_height(FONT4);
+
+		time_x = (320 - time_width)/2;
+
+		time_y = (240 - time_height)/2; // Position below "Current Time:" label
+
+
+
+		// clear old time area
+		// draw new time
+		ILI9341_Draw_Text("00:00:00", FONT4, time_x, time_y, WHITE, BACKG);
 		break;
 
 
@@ -161,8 +175,8 @@ void screenResolve(void) {
 		ILI9341_Fill_Screen(BACKG);
 
 			//level 1
-			w = (320 - get_text_width("Charge Phone [SELECTED]", FONT4))/2;
-			ILI9341_Draw_Text("Charge Phone [SELECTED]", FONT4, w, 80, GREEN, BACKG);
+			w = (320 - get_text_width("Charge Phone", FONT4))/2;
+			ILI9341_Draw_Text("Charge Phone", FONT4, w, 80, GREEN, BACKG);
 
 			//level 2
 			w = (320 - get_text_width("Lock", FONT4))/2;
@@ -187,8 +201,8 @@ void screenResolve(void) {
 			ILI9341_Draw_Text("Charge Phone", FONT4, w, 80, RED, BACKG);
 
 			//level 2
-			w = (320 - get_text_width("Lock [SELECTED]", FONT4))/2;
-			ILI9341_Draw_Text("Lock [SELECTED]", FONT4, w, 120, GREEN, BACKG);
+			w = (320 - get_text_width("Lock", FONT4))/2;
+			ILI9341_Draw_Text("Lock", FONT4, w, 120, GREEN, BACKG);
 
 			//level 3: display time but it is not changing
 			w = (320 - get_text_width(get_time(), FONT4))/2;
@@ -220,11 +234,11 @@ void screenResolve(void) {
 
 
 			//level 1
-			w = (320 - get_text_width("Locking, press button to cancel", FONT4))/2;
-			ILI9341_Draw_Text("Locking, press button to cancel", FONT4, w, 120, WHITE, BACKG);
+		w = (320 - get_text_width("Locking, press button to cancel", FONT4))/2;
+		ILI9341_Draw_Text("Locking, press button to cancel", FONT4, w, 120, WHITE, BACKG);
 
-			// show transitioning lock icon
-			ILI9341_Draw_Lock(160, 60, 40, YELLOW, true); // Locked
+		// show transitioning lock icon
+		ILI9341_Draw_Lock(160, 60, 40, YELLOW, true); // Locked
 
 
 
@@ -235,7 +249,9 @@ void screenResolve(void) {
 
 		//turn on
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
+
 		ILI9341_Fill_Screen(BACKG);
+
 
 		//level 1
 		w = (320 - get_text_width("Time Remaining", FONT4))/2;
@@ -257,27 +273,6 @@ void screenResolve(void) {
 
 			// Clear previous time area
 
-			time_width = get_text_width(current_time, FONT4);
-
-			time_height = get_text_height(FONT4);
-
-			time_x = (320 - time_width)/2;
-
-			time_y = 140;
-
-
-
-			// clear old time area
-
-			ILI9341_Draw_Rectangle(time_x - 5, time_y - 5,
-
-					time_width + 10, time_height + 10, BACKG);
-
-
-
-			// draw new time
-
-			ILI9341_Draw_Text(current_time, FONT4, time_x, time_y, WHITE, BACKG);
 
 
 
@@ -524,11 +519,30 @@ void UEA_Timer_Update(){
 
 		// clear old time area
 		// draw new time
+		uint8_t pad=3;
+		ILI9341_Draw_FilledRectangleCoord(time_x-pad, time_y-pad, time_x + time_width + pad, time_y + time_height + pad, BACKG);
+
 		ILI9341_Draw_Text(time_str, FONT4, time_x, time_y, WHITE, BACKG);
 		// save current time for next comparison
 
 }
 
+void Ring_Update(){
+	uint32_t time_ms = lockTimerGetTime();
+
+
+	// clear previous time area
+
+	// clear old time area
+	// draw new time
+	int rad = 80;
+	int deg = max_time_ms/time_ms;
+
+	ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, deg, RED);
+
+		// save current time for next comparison
+
+}
 
 
 void screenResolveDebug(void) {
