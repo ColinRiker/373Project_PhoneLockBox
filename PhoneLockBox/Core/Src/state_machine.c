@@ -307,7 +307,7 @@ void runStateMachine(void) {
 	if(master_timer_done) { //if we trigger overall timer
 		next = UNLOCKED_FULL_AWAKE_FUNC_A;
 		//reset
-		master_timer_done=false;
+		master_timer_done = false;
 	}
 
 	// update state if changed
