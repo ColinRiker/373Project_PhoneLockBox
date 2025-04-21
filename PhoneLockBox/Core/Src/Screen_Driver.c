@@ -96,11 +96,11 @@ void screenResolve(void) {
 	int time_width;
 
 	int time_height;
+	int rad;
 
 	int time_x;
 
 	int time_y;
-	char* current_time = NULL;
 
 
 //	printf("%d   %d\n", previous,state);
@@ -267,7 +267,9 @@ void screenResolve(void) {
 
 		//level 2 - time display with partial refresh
 
-		current_time = get_time();
+		int rad = 80;
+
+		ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, 360, RED);
 
 //		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
 
@@ -318,42 +320,12 @@ void screenResolve(void) {
 
 
 			// Draw lock icon
-
 			ILI9341_Draw_Lock(280, 20, 20, YELLOW, true); // Locked
+			rad = 80;
+
+			ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, 360, RED);
 
 
-
-
-
-		//level 2 - time display with partial refresh
-
-		current_time = get_time();
-
-//		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
-
-			// Clear previous time area
-
-			time_width = get_text_width(current_time, FONT4);
-
-			time_height = get_text_height(FONT4);
-
-			time_x = (320 - time_width)/2;
-
-			time_y = 140;
-
-
-
-			// clear old time area
-
-			ILI9341_Draw_Rectangle(time_x - 5, time_y - 5,
-
-					time_width + 10, time_height + 10, BACKG);
-
-
-
-			// draw new time
-
-			ILI9341_Draw_Text(current_time, FONT4, time_x, time_y, WHITE, BACKG);
 
 
 
@@ -407,13 +379,11 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Text("Ignore [NOT SELECTED]", FONT4, w, 160, WHITE, BACKG);
 
+			rad = 80;
 
 
-			// draw lock and phone icons
+			ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, 360, RED);
 
-			ILI9341_Draw_Lock(280, 20, 20, YELLOW, true); // Locked
-
-			ILI9341_Draw_Phone(10, 10, 20, true); // Phone present
 
 
 
@@ -450,13 +420,10 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Text("Ignore [SELECTED]", FONT4, w, 160, WHITE, BACKG);
 
+			rad = 80;
 
+			ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, 360, RED);
 
-			// draw lock and phone icons
-
-			ILI9341_Draw_Lock(280, 20, 20, YELLOW, true); // Locked
-
-			ILI9341_Draw_Phone(10, 10, 20, true); // Phone present
 
 
 
@@ -536,7 +503,7 @@ void Ring_Update(){
 	// clear old time area
 	// draw new time
 	int rad = 80;
-	int deg = max_time_ms/time_ms;
+	int deg = 360 - (time_ms/max_time_ms) * 360;
 
 	ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, deg, RED);
 
