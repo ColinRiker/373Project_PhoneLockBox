@@ -183,11 +183,11 @@ int main(void)
 		// Poor Mans Sampling, or PM Sampling, if the delta is too big remove the data point!
 		// no need to deal with complex wrap around logic or direction determination!
 		if(state == UNLOCKED_EMPTY_AWAKE) {
-			screenResolve();
-
 			uint32_t delta = rotencGetDelta();
 			if (delta) { //Check mag^2 of delta
 				lockTimerSetTime(lockTimerGetTime() + (delta * 60000));
+				UEA_Timer_Update();
+
 			}
 		}
 

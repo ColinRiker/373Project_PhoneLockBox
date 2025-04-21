@@ -173,6 +173,6 @@ void ILI9341_Draw_FilledCircle_Sector(uint16_t X, uint16_t Y, uint16_t radius, f
 void ILI9341_Draw_Lock(uint16_t X, uint16_t Y, uint16_t Size, uint16_t Colour,bool locked);
 void ILI9341_Draw_RingSector_v2(uint16_t X, uint16_t Y, uint16_t inner_radius, uint16_t outer_radius, float start_angle_deg, float end_angle_deg, uint16_t color);
 void ILI9341_DisplayPower(bool on);
-
+void UEA_Timer_Update();
 
 #endif

@@ -108,15 +108,17 @@ void screenResolve(void) {
 
 	int w = 0;
 	int h=0;
+	int time_width;
 
-	bool full_refresh = (previous != state);
-	uint32_t prev_time_ms=0;
-	static char prev_time_str[16] = {0}; // For tracking time changes
+	int time_height;
 
+	int time_x;
+
+	int time_y;
 	char* current_time = NULL;
 
 
-	printf("%d   %d\n", previous,state);
+//	printf("%d   %d\n", previous,state);
 	switch (state) {
 
 
@@ -158,51 +160,49 @@ void screenResolve(void) {
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
 
-		if (full_refresh) {
 
-			ILI9341_Fill_Screen(BACKG);
+		ILI9341_Fill_Screen(BACKG);
 
-			//level 1
+		//level 1
 
-			w = (320 - get_text_width("Press Button To Power Off", FONT4))/2;
+		w = (320 - get_text_width("Press Button To Power Off", FONT4))/2;
 
-			ILI9341_Draw_Text("Press Button To Power Off", FONT4, w, 10, WHITE, BACKG);
-
-
-			//level 2
-
-			w = (320 - get_text_width("Turn Dial to Set time", FONT4))/2;
-
-			ILI9341_Draw_Text("Turn Dial to Set time", FONT4, w, 30, WHITE, BACKG);
+		ILI9341_Draw_Text("Press Button To Power Off", FONT4, w, 10, WHITE, BACKG);
 
 
-			//level 3 (new time display)
+		//level 2
+
+		w = (320 - get_text_width("Turn Dial to Set time", FONT4))/2;
+
+		ILI9341_Draw_Text("Turn Dial to Set time", FONT4, w, 30, WHITE, BACKG);
+
+
+		//level 3 (new time display)
 
 //			w = (320 - get_text_width("Current Time:", FONT4))/2;
 //
 //			ILI9341_Draw_Text("Current Time:", FONT4, w, 160, WHITE, BACKG);
 
 
-			//level 4 (moved from level 3)
+		//level 4 (moved from level 3)
 
-			w = (320 - get_text_width("Put phone in box to enable locking", FONT3))/2;
-
-
-			ILI9341_Draw_Text("Put phone in box to enable locking", FONT3, w, 220, WHITE, BACKG);
+		w = (320 - get_text_width("Put phone in box to enable locking", FONT3))/2;
 
 
-
-			// draw lock and phone icons
+		ILI9341_Draw_Text("Put phone in box to enable locking", FONT3, w, 220, WHITE, BACKG);
 
 
 
-			ILI9341_Draw_Lock(290, 20, 20, YELLOW, false); // Unlocked
-
-			ILI9341_Draw_Phone(10, 10, 20, false); // No phone
+		// draw lock and phone icons
 
 
 
-		}
+		ILI9341_Draw_Lock(290, 20, 20, YELLOW, false); // Unlocked
+
+		ILI9341_Draw_Phone(10, 10, 20, false); // No phone
+
+
+
 
 
 
@@ -210,35 +210,7 @@ void screenResolve(void) {
 
 //		current_time = get_time();
 
-		uint32_t time_ms = lockTimerGetTime();
 
-		if (prev_time_ms != time_ms) {
-
-			// clear previous time area
-
-			char* time_str = get_time_str(time_ms);
-
-			int time_width = get_text_width(time_str, FONT4);
-
-			int time_height = get_text_height(FONT4);
-
-			int time_x = (320 - time_width)/2;
-
-			int time_y = (240 - time_height)/2; // Position below "Current Time:" label
-
-
-
-			// clear old time area
-
-			// draw new time
-
-			ILI9341_Draw_Text(time_str, FONT4, time_x, time_y, WHITE, BACKG);
-
-
-
-			// save current time for next comparison
-
-		}
 
 
 		break;
@@ -250,7 +222,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh && previous !=UNLOCKED_FULL_AWAKE_FUNC_B) {
 
 			ILI9341_Fill_Screen(BACKG);
 
@@ -276,7 +247,7 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Phone(10, 10, 20, true); // Phone present
 
-		}
+
 
 
 		break;
@@ -288,7 +259,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh && previous != UNLOCKED_FULL_AWAKE_FUNC_A) {
 
 			ILI9341_Fill_Screen(BACKG);
 
@@ -318,7 +288,7 @@ void screenResolve(void) {
 
 			// draw dial indicator
 
-		}
+
 
 
 
@@ -347,7 +317,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh) {
 
 			ILI9341_Fill_Screen(BACKG);
 
@@ -364,7 +333,7 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Lock(160, 60, 40, YELLOW, true); // Locked
 
-		}
+
 
 		break;
 
@@ -375,7 +344,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh) {
 
 			ILI9341_Fill_Screen(BACKG);
 
@@ -394,7 +362,7 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Phone(10, 10, 20, true); // Phone present
 
-		}
+
 
 
 
@@ -402,17 +370,17 @@ void screenResolve(void) {
 
 		current_time = get_time();
 
-		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
+//		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
 
 			// Clear previous time area
 
-			int time_width = get_text_width(current_time, FONT4);
+			time_width = get_text_width(current_time, FONT4);
 
-			int time_height = get_text_height(FONT4);
+			time_height = get_text_height(FONT4);
 
-			int time_x = (320 - time_width)/2;
+			time_x = (320 - time_width)/2;
 
-			int time_y = 140;
+			time_y = 140;
 
 
 
@@ -432,9 +400,9 @@ void screenResolve(void) {
 
 			// save current time for next comparison
 
-			strcpy(prev_time_str, current_time);
+//			strcpy(prev_time_str, current_time);
 
-		}
+
 
 		break;
 
@@ -458,7 +426,7 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh) {
+//		if (full_refresh) {
 
 			ILI9341_Fill_Screen(BACKG);
 
@@ -475,7 +443,7 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Lock(280, 20, 20, YELLOW, true); // Locked
 
-		}
+
 
 
 
@@ -483,17 +451,17 @@ void screenResolve(void) {
 
 		current_time = get_time();
 
-		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
+//		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
 
 			// Clear previous time area
 
-			int time_width = get_text_width(current_time, FONT4);
+			time_width = get_text_width(current_time, FONT4);
 
-			int time_height = get_text_height(FONT4);
+			time_height = get_text_height(FONT4);
 
-			int time_x = (320 - time_width)/2;
+			time_x = (320 - time_width)/2;
 
-			int time_y = 140;
+			time_y = 140;
 
 
 
@@ -513,9 +481,8 @@ void screenResolve(void) {
 
 			// save current time for next comparison
 
-			strcpy(prev_time_str, current_time);
 
-		}
+
 
 		break;
 
@@ -538,7 +505,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh) {
 
 			ILI9341_Fill_Screen(BACKG);
 
@@ -571,7 +537,7 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Phone(10, 10, 20, true); // Phone present
 
-		}
+
 
 		break;
 
@@ -582,7 +548,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh) {
 
 			ILI9341_Fill_Screen(BACKG);
 
@@ -615,7 +580,7 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Phone(10, 10, 20, true); // Phone present
 
-		}
+
 
 		break;
 
@@ -626,7 +591,6 @@ void screenResolve(void) {
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 
-		if (full_refresh) {
 
 			ILI9341_Fill_Screen(BACKG);
 
@@ -637,7 +601,6 @@ void screenResolve(void) {
 
 			ILI9341_Draw_Text("Box Forced Open", FONT4, w, 120, WHITE, BACKG);
 
-		}
 
 		break;
 
@@ -655,6 +618,37 @@ void screenResolve(void) {
 		break;
 
 	}
+
+}
+
+
+void UEA_Timer_Update(){
+	uint32_t time_ms = lockTimerGetTime();
+
+
+		// clear previous time area
+
+		char* time_str = get_time_str(time_ms);
+
+		int time_width = get_text_width(time_str, FONT4);
+
+		int time_height = get_text_height(FONT4);
+
+		int time_x = (320 - time_width)/2;
+
+		int time_y = (240 - time_height)/2; // Position below "Current Time:" label
+
+
+
+		// clear old time area
+
+		// draw new time
+
+		ILI9341_Draw_Text(time_str, FONT4, time_x, time_y, WHITE, BACKG);
+
+
+
+		// save current time for next comparison
 
 }
 
