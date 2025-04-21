@@ -14,7 +14,7 @@
 
 #ifdef DEBUG_OUT
 #define DEBUG_EVENT_CONTROLLER
-//#define DEBUG_NFC
+#define DEBUG_NFC
 //#define DEBUG_DISPLAY
 #define DEBUG_AUDIO
 #define DEBUG_ROTARY_ENCODER

@@ -168,7 +168,6 @@ void ILI9341_Draw_Text(const char* str, const uint8_t font[], uint16_t X, uint16
 void ILI9341_Draw_Image(const char* Image_Array, uint8_t Orientation);
 int get_text_width(const char* str, const uint8_t font[]);
 int get_text_height(const uint8_t font[]);
-void screenResolve(void);
 void ILI9341_Draw_RingSector(uint16_t X, uint16_t Y, uint16_t inner_radius, uint16_t outer_radius, float angle_deg, uint16_t color);
 void ILI9341_Draw_FilledCircle_Sector(uint16_t X, uint16_t Y, uint16_t radius, float angle_deg, uint16_t color);
 void ILI9341_Draw_Lock(uint16_t X, uint16_t Y, uint16_t Size, uint16_t Colour,bool locked);

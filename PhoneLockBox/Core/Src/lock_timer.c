@@ -33,8 +33,8 @@ void lockTimerCancel(void) {
 }
 
 void lockEngage(void) {
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, 1);
+	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, 1);
 }
 void lockDisenage(void) {
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, 0);
+	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, 0);
 }

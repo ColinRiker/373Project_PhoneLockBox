@@ -161,6 +161,8 @@ int main(void)
 	rotencInit();
 	nfcInit();
 
+	lockTimerCancel();
+
 	stateMachineInit();
 	eventControllerInit();
 
@@ -605,6 +607,9 @@ static void MX_GPIO_Init(void)
   HAL_PWREx_EnableVddIO2();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10|ILI9341_CS_Pin|ILI9341_RESET_Pin|ILI9341_DC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -644,6 +649,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PE15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB10 ILI9341_CS_Pin ILI9341_RESET_Pin ILI9341_DC_Pin */

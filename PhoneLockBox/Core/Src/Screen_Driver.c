@@ -107,6 +107,7 @@ char* get_time() {
 void screenResolve(void) {
 
 	int w = 0;
+	int h=0;
 
 	bool full_refresh = (previous != state);
 	uint32_t prev_time_ms=0;
@@ -115,7 +116,7 @@ void screenResolve(void) {
 	char* current_time = NULL;
 
 
-
+	printf("%d   %d\n", previous,state);
 	switch (state) {
 
 
@@ -124,6 +125,7 @@ void screenResolve(void) {
 		// turn OFF
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
+		ILI9341_Fill_Screen(BACKG);
 
 
 		//nothing to display when we are sleep
@@ -140,10 +142,11 @@ void screenResolve(void) {
 		ILI9341_Fill_Screen(BACKG);
 
 		w = (320 - get_text_width("Powering On", FONT4))/2;
+		h = (240 - get_text_height(FONT4))/2;
 
 		//trying to initialize this to the middle of the screen
 
-		ILI9341_Draw_Text("Powering On", FONT4, w, 120, WHITE, BACKG);
+		ILI9341_Draw_Text("Powering On", FONT4, w, h, WHITE, BACKG);
 
 		break;
 
@@ -182,15 +185,18 @@ void screenResolve(void) {
 
 			//level 4 (moved from level 3)
 
-			w = (320 - get_text_width("Put phone in box to enable locking", FONT4))/2;
+			w = (320 - get_text_width("Put phone in box to enable locking", FONT3))/2;
 
-			ILI9341_Draw_Text("Put phone in box to enable locking", FONT4, w, 200, WHITE, BACKG);
+
+			ILI9341_Draw_Text("Put phone in box to enable locking", FONT3, w, 220, WHITE, BACKG);
 
 
 
 			// draw lock and phone icons
 
-			ILI9341_Draw_Lock(280, 20, 20, YELLOW, false); // Unlocked
+
+
+			ILI9341_Draw_Lock(290, 20, 20, YELLOW, false); // Unlocked
 
 			ILI9341_Draw_Phone(10, 10, 20, false); // No phone
 
@@ -202,7 +208,7 @@ void screenResolve(void) {
 
 		//level 3 - time display with partial refresh
 
-		current_time = get_time();
+//		current_time = get_time();
 
 		uint32_t time_ms = lockTimerGetTime();
 
@@ -218,27 +224,19 @@ void screenResolve(void) {
 
 			int time_x = (320 - time_width)/2;
 
-			int time_y = 180; // Position below "Current Time:" label
+			int time_y = (240 - time_height)/2; // Position below "Current Time:" label
 
 
 
 			// clear old time area
 
-			ILI9341_Draw_Rectangle(time_x - 5, time_y - 5,
-
-					time_width + 10, time_height + 10, BACKG);
-
-
-
 			// draw new time
 
-			ILI9341_Draw_Text(current_time, FONT4, time_x, time_y, WHITE, BACKG);
+			ILI9341_Draw_Text(time_str, FONT4, time_x, time_y, WHITE, BACKG);
 
 
 
 			// save current time for next comparison
-
-			strcpy(prev_time_str, current_time);
 
 		}
 
@@ -320,56 +318,11 @@ void screenResolve(void) {
 
 			// draw dial indicator
 
-			int rad = 30;
-
-			int rot_enc = TIM1->CNT;
-
-			float deg = 360 - (rot_enc/100.0)*360;
-
-			ILI9341_Draw_RingSector(160, 210, rad-3, rad, deg, RED);
-
 		}
 
 
 
 		//level 3 - time display with partial refresh
-
-		current_time = get_time();
-
-		if (full_refresh || strcmp(prev_time_str, current_time) != 0) {
-
-			// Clear previous time area
-
-			int time_width = get_text_width(current_time, FONT4);
-
-			int time_height = get_text_height(FONT4);
-
-			int time_x = (320 - time_width)/2;
-
-			int time_y = 160;
-
-
-
-			// Clear old time area
-
-			ILI9341_Draw_Rectangle(time_x - 5, time_y - 5,
-
-					time_width + 10, time_height + 10, BACKG);
-
-
-
-			// Draw new time
-
-			ILI9341_Draw_Text(current_time, FONT4, time_x, time_y, WHITE, BACKG);
-
-
-
-			// Save current time for next comparison
-
-			strcpy(prev_time_str, current_time);
-
-		}
-		ILI9341_Draw_Text("UNLOCKED_FULL_AWAKE_FUNC_B", FONT4, 0, 100, WHITE, BACKG);
 
 
 		break;
@@ -380,6 +333,7 @@ void screenResolve(void) {
 		//turn OFF
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
+		ILI9341_Fill_Screen(BACKG);
 
 
 		// nothing to display when we are sleep
@@ -490,6 +444,7 @@ void screenResolve(void) {
 		//turn OFF
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
+		ILI9341_Fill_Screen(BACKG);
 
 
 		// no text is displayed when screen is off
@@ -570,6 +525,7 @@ void screenResolve(void) {
 		// MOSFET: ON, SCREEN: OFF
 
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_RESET);
+		ILI9341_Fill_Screen(BACKG);
 
 		//nothing to display when we are sleep
 
