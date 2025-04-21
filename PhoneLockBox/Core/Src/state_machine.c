@@ -367,14 +367,14 @@ void stateScheduleEvents() {
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
 		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 500, 0);
 		eventRegister(nfcEventCallbackSlow, EVENT_NFC_READ, EVENT_DELTA, 5000, 0);
 		break;
 
 	case UNLOCKED_FULL_AWAKE_FUNC_B:
 		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 500, 0);
 		eventRegister(nfcEventCallbackSlow, EVENT_NFC_READ, EVENT_DELTA, 5000, 0);
 		break;
 
