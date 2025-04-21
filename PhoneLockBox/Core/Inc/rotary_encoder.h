@@ -16,7 +16,7 @@
 #include "stm32l4xx_hal.h"
 
 void rotencInit(void);
-uint32_t rotencGetDelta(void);
+int32_t rotencGetDelta(void);
 bool rotencHasMoved(void);
 void rotencDeltaEvent(void);
 
