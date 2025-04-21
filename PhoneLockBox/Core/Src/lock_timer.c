@@ -31,14 +31,14 @@ void lockTimerStart(void) {
 }
 
 uint32_t lockTimerGetTime(void){
-	return TIM2->CNT;
+	return TIM2->CNT / 10;
 }
 
 void lockTimerSetTime(int32_t time) {
 	if (time < 0)
 		time = 0;
 
-	TIM2->CNT = time;
+	TIM2->CNT = time * 10;
 }
 
 void lockTimerCancel(void) {

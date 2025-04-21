@@ -186,7 +186,7 @@ int main(void)
 
 			if (delta) { //Check mag^2 of delta
 				//printf("DELTA: %ld\r\n", delta);
-				lockTimerSetTime(lockTimerGetTime() + (delta * 60000));
+				lockTimerSetTime(lockTimerGetTime() + (delta * 30000));
 				UEA_Timer_Update();
 
 			}
