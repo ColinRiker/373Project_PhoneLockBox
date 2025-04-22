@@ -9,8 +9,8 @@
 #define INC_AUDIO_H_
 
 #define MAX_ENTRIES 100
-#define TIME_MIN_THRESH 0.002
-#define TIME_MAX_THRESH 0.005
+#define TIME_MIN_THRESH 0.0025
+#define TIME_MAX_THRESH 0.0030
 
 #include <stdbool.h>
 

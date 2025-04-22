@@ -155,6 +155,7 @@ void runStateMachine(void) {
 	case UNLOCKED_EMPTY_AWAKE:
 		//THIS TAKES PRIORITY OVER GOING BACK TO SLEEP
 		if (hasFlag(SFLAG_NFC_PHONE_PRESENT)) {
+			printf("I am transitioning bc: SFLAG_NFC_PHONE_PRESENT");
 			next = UNLOCKED_FULL_AWAKE_FUNC_A;
 		}
 		//if we cannot move to full awake, we move back to sleep
@@ -167,6 +168,7 @@ void runStateMachine(void) {
 	case UNLOCKED_FULL_AWAKE_FUNC_A:
 		//if we take out phone at ANY point, we gotta go back to UNLCOKED_EMPTY_AWAKE
 		if(hasFlag(SFLAG_NFC_PHONE_NOT_PRESENT)) {
+			printf("I am transitioning bc: SFLAG_NFC_PHONE_NOT_PRESENT");
 			next=UNLOCKED_EMPTY_AWAKE;
 		}
 		// PRIORITIZE MOVING TO AWAKE FUNC B
@@ -317,7 +319,9 @@ void runStateMachine(void) {
 	if(master_timer_done) { //if we trigger overall timer
 		next = UNLOCKED_FULL_AWAKE_FUNC_A;
 		//reset
+		lockTimerCancel();
 		master_timer_done = false;
+		printf("TIMER DONE!!!!!!\n\r");
 	}
 
 	// update state if changed
@@ -406,13 +410,13 @@ void stateScheduleEvents() {
 	case LOCKED_FULL_NOTIFICATION_FUNC_A:
 		eventRegister(magBoxStatusEvent, EVENT_MAGNOMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 500, 0);
 		break;
 
 	case LOCKED_FULL_NOTIFICATION_FUNC_B:
 		eventRegister(magBoxStatusEvent, EVENT_ACCELEROMETER, EVENT_DELTA, 1000, 0);
 		eventRegister(eventTimerCallback, EVENT_TIMER, EVENT_SINGLE, MINUTE, 0);
-		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 1, 0);
+		eventRegister(rotencDeltaEvent, EVENT_ROTARY_ENCODER, EVENT_DELTA, 500, 0);
 		break;
 
 	case LOCKED_FULL_ASLEEP:

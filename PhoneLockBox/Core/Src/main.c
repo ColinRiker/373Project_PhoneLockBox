@@ -191,8 +191,8 @@ int main(void)
 
 			}
 		}
-		if(state == LOCKED_FULL_AWAKE || state == LOCKED_MONITOR_AWAKE || state == LOCKED_FULL_NOTIFICATION_FUNC_A || state == LOCKED_FULL_NOTIFICATION_FUNC_B){
-			if (lockTimerGetTime() % 15000 == 0){
+		if(state == LOCKED_FULL_AWAKE || state == LOCKED_MONITOR_AWAKE){
+			if (lockTimerGetTime() % 1500 == 0) {
 				Ring_Update();
 			}
 			if (lockTimerGetTime() % 150 == 0){
@@ -200,6 +200,7 @@ int main(void)
 			}
 
 		}
+
 
 
     /* USER CODE END WHILE */
