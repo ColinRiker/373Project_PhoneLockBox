@@ -320,6 +320,7 @@ void runStateMachine(void) {
 		next = UNLOCKED_FULL_AWAKE_FUNC_A;
 		//reset
 		lockTimerCancel();
+		lockDisenage();
 		master_timer_done = false;
 		printf("TIMER DONE!!!!!!\n\r");
 	}
@@ -352,7 +353,7 @@ void stateTransitionCleanup (BoxState next) {
 	if (state == UNLOCKED_TO_LOCKED_AWAKE && next == LOCKED_FULL_AWAKE) {
 		lockTimerStart();
 		lockEngage();
-	} else if (( state == LOCKED_FULL_AWAKE || state == LOCKED_FULL_ASLEEP) && next == UNLOCKED_FULL_AWAKE_FUNC_B) {
+	} else if ( state == LOCKED_FULL_NOTIFICATION_FUNC_A && next == UNLOCKED_FULL_AWAKE_FUNC_B) {
 		lockTimerCancel();
 		lockDisenage();
 	} else if (next == EMERGENCY_OPEN) {
