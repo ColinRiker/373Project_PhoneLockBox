@@ -5,8 +5,11 @@
 #include <math.h> // for atan2f and M_PI
 #include <stdbool.h>
 #include "font.h"
+#include "lock_timer.h"
+//Driver for screen functions
 
 
+//Definitions of commands and conversions
 #define HSPI_INSTANCE &hspi1
 #define DEG_TO_RAD(angle) ((angle) * M_PI / 180.0f)
 #define DISPLAY_WIDTH 240
@@ -14,7 +17,7 @@
 #define ILI9341_CMD_DISPLAY_OFF 0x28
 #define ILI9341_CMD_DISPLAY_ON 0x29
 
-
+//SPI instance extern
 extern SPI_HandleTypeDef hspi1;
 extern uint32_t max_time_ms;
 
@@ -22,17 +25,12 @@ int LCD_HEIGHT = LCD_HEIGHT_1;
 int LCD_WIDTH = LCD_WIDTH_1;
 
 
-#include <stdio.h>
-#include "lock_timer.h"
 
 
 
-#include <stdio.h>
-#include "lock_timer.h"
 
 
-// function to get formatted time string
-
+// function to get formatted time string from timer time
 char* get_time_str(uint32_t ms_time) {
 	static char time_str[16]; // static buffer for the time string
 
@@ -48,6 +46,7 @@ char* get_time_str(uint32_t ms_time) {
 
 }
 
+//implicitly get time string
 char* get_time() {
 	static char time_str[16]; // static buffer for the time string
 	uint32_t ms_time = lockTimerGetTime();
@@ -62,6 +61,10 @@ char* get_time() {
 
 }
 
+
+
+
+//Set screen according to current state
 void screenResolve(void) {
 	int w = 0;
 	int h=0;
@@ -71,8 +74,11 @@ void screenResolve(void) {
 	int time_x;
 	int time_y;
 
-//	printf("%d   %d\n", previous,state);
+	//Switch case for every state
 	switch (state) {
+
+
+
 	case UNLOCKED_EMPTY_ASLEEP:
 
 		// turn OFF
@@ -100,7 +106,7 @@ void screenResolve(void) {
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 		ILI9341_Fill_Screen(BACKG);
 
-		//level 1
+		//Draw text on screen
 		w = (320 - get_text_width("Press Button To Power Off", FONT4))/2;
 		ILI9341_Draw_Text("Press Button To Power Off", FONT4, w, 10, WHITE, BACKG);
 
@@ -133,7 +139,7 @@ void screenResolve(void) {
 		HAL_GPIO_WritePin(LCD_BACKLIGHT_PORT, LCD_BACKLIGHT_PIN, GPIO_PIN_SET);
 		ILI9341_Fill_Screen(BACKG);
 
-		//level 1
+		//draw text
 		w = (320 - get_text_width("Charge Phone", FONT4))/2;
 		ILI9341_Draw_Text("Charge Phone", FONT4, w, 80, GREEN, BACKG);
 
@@ -204,7 +210,7 @@ void screenResolve(void) {
 		ILI9341_Draw_Lock(280, 20, 20, YELLOW, true); // Locked
 		ILI9341_Draw_Phone(10, 10, 20, true); // Phone present
 
-		//level 2 - time display with partial refresh
+		//Draw the ring around the time left
 		int rad = 80;
 		ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, 360, RED);
 		break;
@@ -228,6 +234,7 @@ void screenResolve(void) {
 			// Draw lock icon
 			ILI9341_Draw_Lock(280, 20, 20, YELLOW, true); // Locked
 			rad = 80;
+			//draw ring around text
 			ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, 360, RED);
 			// save current time for next comparison
 		break;
@@ -310,8 +317,9 @@ void screenResolve(void) {
 
 }
 
-
+//Screen update where we draw the time left
 void UEA_Timer_Update(){
+	//get time
 	uint32_t time_ms = lockTimerGetTime();
 		// clear previous time area
 		char* time_str = get_time_str(time_ms);
@@ -323,23 +331,32 @@ void UEA_Timer_Update(){
 		// clear old time area
 		// draw new time
 		uint8_t pad=3;
+
+		//clear area behind text and write the time
 		ILI9341_Draw_FilledRectangleCoord(time_x-pad, time_y-pad, time_x + time_width + pad, time_y + time_height + pad, BACKG);
 
 		ILI9341_Draw_Text(time_str, FONT4, time_x, time_y, WHITE, BACKG);
 		// save current time for next comparison
 }
 
+
+//Function to draw updated ring angle based on time
 void Ring_Update(){
+	//get time
 	uint32_t time_ms = lockTimerGetTime();
 	// clear previous time area
 
 	// clear old time area
 	// draw new time
 	int rad = 80;
+
 	float frac = (float)time_ms/max_time_ms;
+	//convert time remaining to percentage and use it as degrees of ring
 	float deg = frac * 360.0;
 
 	//ILI9341_Draw_Rectangle(320/2 - rad,240/2 - rad,2 * rad,2 * rad,BACKG);
+
+	//bounding rectangles that cover entire ring to clear old ring
 	ILI9341_Draw_Rectangle(320/2 - rad,240/2 - rad,2 * rad ,rad - (get_text_height(FONT4)),BACKG);
 	ILI9341_Draw_Rectangle(320/2 - rad,240/2 + get_text_height(FONT4),2 * rad ,rad - (get_text_height(FONT4)),BACKG);
 
@@ -348,14 +365,14 @@ void Ring_Update(){
 
 
 //	ILI9341_Draw_Rectangle(320/2 - rad,240/2 - rad,2 * rad,2 * rad,BACKG);
-
+	//draw new ring with calculated degrees
 	ILI9341_Draw_RingSector(320/2, 240/2, rad-3, rad, deg, RED);
 
 		// save current time for next comparison
 
 }
 
-
+//debug version that just shows state name on screen
 void screenResolveDebug(void) {
 
 	int w = 0;
@@ -479,8 +496,11 @@ void screenResolveDebug(void) {
 		break;
 	}
 }
+
+//general function to send a char via SPI
 void ILI9341_SPI_Send(unsigned char SPI_Data)
 {
+	//transmit via our SPI instance
 	HAL_StatusTypeDef rc = HAL_SPI_Transmit(HSPI_INSTANCE, &SPI_Data, 1, 1);
 #ifdef DEBUG_DISPLAY
 	switch(rc) {
@@ -499,6 +519,7 @@ void ILI9341_SPI_Send(unsigned char SPI_Data)
 #endif /*END DEBUG_DISPLAY*/
 }
 
+//function to sent one command via SPI
 void ILI9341_Write_Command(uint8_t Command)
 {
 	HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET);
@@ -507,6 +528,7 @@ void ILI9341_Write_Command(uint8_t Command)
 	HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
 }
 
+//function to send one 8 bit int via SPI
 void ILI9341_Write_Data(uint8_t Data)
 {
 	HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET);
@@ -515,6 +537,7 @@ void ILI9341_Write_Data(uint8_t Data)
 	HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
 }
 
+//function to set address range to draw in
 void ILI9341_Set_Address(uint16_t X1, uint16_t Y1, uint16_t X2, uint16_t Y2)
 {
 	ILI9341_Write_Command(0x2A);
@@ -532,7 +555,7 @@ void ILI9341_Set_Address(uint16_t X1, uint16_t Y1, uint16_t X2, uint16_t Y2)
 	ILI9341_Write_Command(0x2C);
 }
 
-/*HARDWARE RESET*/
+/*HARDWARE RESET function*/
 void ILI9341_Reset(void)
 {
 	HAL_GPIO_WritePin(LCD_RST_PORT, LCD_RST_PIN, GPIO_PIN_RESET);
@@ -543,7 +566,6 @@ void ILI9341_Reset(void)
 }
 
 /*Ser rotation of the screen - changes x0 and y0*/
-
 void ILI9341_Set_Rotation(uint8_t rotation)
 {
 	ILI9341_Write_Command(0x36);
@@ -576,7 +598,7 @@ void ILI9341_Set_Rotation(uint8_t rotation)
 	}
 }
 
-
+//Draw burst of color by setting address then providing the size and colors to fill
 void ILI9341_Draw_Colour_Burst(uint16_t Colour, uint32_t Size)
 {
 	//SENDS COLOUR
@@ -766,7 +788,6 @@ void ILI9341_Init(void)
 
 }
 
-//INTERNAL FUNCTION OF LIBRARY, USAGE NOT RECOMENDED, USE Draw_Pixel INSTEAD
 /*Sends single pixel colour information to LCD*/
 void ILI9341_Draw_Colour(uint16_t Colour)
 {
@@ -899,7 +920,7 @@ void ILI9341_Draw_Lock(uint16_t X, uint16_t Y, uint16_t Size, uint16_t Colour,bo
 
 
 
-
+//Draw singular char
 void ILI9341_Draw_Char(char ch, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor)
 {
 	if ((ch < 31) || (ch > 127)) return;
@@ -931,6 +952,7 @@ void ILI9341_Draw_Char(char ch, const uint8_t font[], uint16_t X, uint16_t Y, ui
 	}
 }
 
+//function to draw text via calls of draw char
 void ILI9341_Draw_Text(const char* str, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor)
 {
 	uint8_t charWidth;			/* Width of character */
@@ -959,6 +981,7 @@ void ILI9341_Draw_Text(const char* str, const uint8_t font[], uint16_t X, uint16
 	}
 }
 
+//simulate string draw to get width
 int get_text_width(const char* str, const uint8_t font[])
 {
 	int width = 0;
@@ -988,6 +1011,7 @@ int get_text_width(const char* str, const uint8_t font[])
 	return width;
 }
 
+//get font height
 int get_text_height(const uint8_t font[]){
 	return font[2];
 }
@@ -1081,6 +1105,7 @@ void ILI9341_Draw_Image(const char* Image_Array, uint8_t Orientation)
 		HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
 	}
 }
+//use dtaw pixel function to draw hollow circle
 void ILI9341_Draw_HollowCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t color)
 {
 	int x = radius-1;
@@ -1116,6 +1141,7 @@ void ILI9341_Draw_HollowCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t
 	}
 }
 
+//Draw a filled circle via draw pixel
 void ILI9341_Draw_FilledCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t color)
 {
 
@@ -1156,6 +1182,7 @@ void ILI9341_Draw_FilledCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t
 	}
 }
 
+//Draw hollow rectangle via draw horizontal and vertical line
 void ILI9341_Draw_HollowRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1, uint16_t color)
 {
 	uint16_t xLen = 0;
@@ -1202,6 +1229,7 @@ void ILI9341_Draw_HollowRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, ui
 	}
 }
 
+//draw filled rectangle between 2 points
 void ILI9341_Draw_FilledRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1, uint16_t color)
 {
 	uint16_t xLen = 0;
@@ -1244,6 +1272,7 @@ void ILI9341_Draw_FilledRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, ui
 	ILI9341_Draw_Rectangle(X0True, Y0True, xLen, yLen, color);
 }
 
+//draw filled circle attempt via color burst
 void ILI9341_Draw_FilledCircle_Sector(uint16_t X, uint16_t Y, uint16_t radius, float angle_deg, uint16_t color)
 {
     if (angle_deg > 360.0f) angle_deg = 360.0f;
@@ -1351,7 +1380,7 @@ void ILI9341_Draw_FilledCircle_Sector(uint16_t X, uint16_t Y, uint16_t radius, f
 //    }
 //}
 
-
+//draw ring sector attempt 1
 void ILI9341_Draw_RingSector(uint16_t X, uint16_t Y, uint16_t inner_radius, uint16_t outer_radius, float angle_deg, uint16_t color)
 {
     if (angle_deg > 360.0f) angle_deg = 360.0f;
@@ -1374,6 +1403,7 @@ void ILI9341_Draw_RingSector(uint16_t X, uint16_t Y, uint16_t inner_radius, uint
     }
 }
 
+//draw ring sector attempt 2
 void ILI9341_Draw_RingSector_v2(uint16_t X, uint16_t Y, uint16_t inner_radius, uint16_t outer_radius, float start_angle_deg, float end_angle_deg, uint16_t color)
 {
     if (start_angle_deg < 0.0f) start_angle_deg = 0.0f;
@@ -1399,7 +1429,7 @@ void ILI9341_Draw_RingSector_v2(uint16_t X, uint16_t Y, uint16_t inner_radius, u
 }
 
 
-
+//draw phone icon
 void ILI9341_Draw_Phone(uint16_t X, uint16_t Y, uint16_t Size,bool detected){
 //	ILI9341_Draw_Rectangle(X,Y,Size , Size*1.5,  Colour);
 	if (detected){
@@ -1417,6 +1447,7 @@ void ILI9341_Draw_Phone(uint16_t X, uint16_t Y, uint16_t Size,bool detected){
 }
 
 
+//Power on or off Display
 void ILI9341_DisplayPower(bool on)
 {
     if (on)

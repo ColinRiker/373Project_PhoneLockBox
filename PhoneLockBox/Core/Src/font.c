@@ -1,5 +1,11 @@
 #include "font.h"
 
+
+
+
+//This is the format for fonts used, first defining offset, width, height
+//To be used for drawing text
+
 const uint8_t Arial_Narrow8x12[] = {
 		/* Offset, Width, Height, BPL */
 		17,8,12,2,
