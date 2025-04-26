@@ -5,7 +5,7 @@ This project is a lock box for your phone to reduce distractions and help keep
 students focused. Here we detail the various modules, provide a system description, and details regarding our hardware setup. Specific function and their implementations should be viewed in their relevant modules and aren't detailed here.
 
 ## Module Overview ##
-<img src="" alt="System Diagram" style="width:50%; height:auto;"><br>
+<img src="https://github.com/ColinRiker/373Project_PhoneLockBox/blob/d6381f0d4689542a73fa41ce20f82c38fbb8303c/graphics/SystemDiagram.png" alt="System Diagram" style="width:50%; height:auto;"><br>
 Below are our main modules that we implemented and designed with brief descriptions of each. See each file for further details on their workings (for non-trivial functions that is)<br><br>
 `Shared.h` - Contains project wide definitions, data types, and some debug specific functions.<br>
 `accelerometer.c` - Holds all the implementation details relevant to the accelerometer and magnetometer, including their event functions.<br>
@@ -20,7 +20,7 @@ Below are our main modules that we implemented and designed with brief descripti
 
 ## System Description ##
 Here the systems general program flow is describe from box initialization all the way through a typical use. Below is the state diagram that describes our entire system.
-<img src="" alt="State Diagram" style="width:50%; height:auto;">
+<img src="https://github.com/ColinRiker/373Project_PhoneLockBox/blob/d6381f0d4689542a73fa41ce20f82c38fbb8303c/graphics/StateDriagram.png" alt="State Diagram" style="width:50%; height:auto;">
 
 ### Startup ###
 Immediately on power up the various modules have their initialization functions called where various I2C, SPI connections are used to send relevant information to our NFC, Accelerometer, and the Display. After which our internal systems such as the state machine, event system and master timer are set up to their default states. Finally, we put disable all our interrupts, so they can be re-enabled only in the states we need.
