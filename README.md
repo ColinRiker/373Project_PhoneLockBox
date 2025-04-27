@@ -4,7 +4,7 @@
 This project is a lockbox for your phone, designed to reduce distractions and help students stay focused. Here, we outline the various modules, provide a system overview, and describe our hardware setup. Specific functions and their implementations are covered within their respective modules and are not detailed here.
 
 ## Module Overview ##
-<img src="https://github.com/ColinRiker/373Project_PhoneLockBox/blob/d6381f0d4689542a73fa41ce20f82c38fbb8303c/graphics/SystemDiagram.png" alt="System Diagram" style="width:400px; height:auto;"><br>
+<img src="" alt="System Diagram" style="width:400px; height:auto;"><br>
 Below are the main modules we implemented and designed, along with brief descriptions of each. For further details on their functionality, please refer to the individual files (particularly for non-trivial functions).<br><br>
 - [`Shared.h`](PhoneLockBox/Core/Inc/Shared.h) — Contains project-wide definitions, data types, and some debug-specific functions.
 - [`accelerometer.c`](PhoneLockBox/Core/Src/accelerometer.c) — Holds all the implementation details relevant to the accelerometer and magnetometer, including their event functions.
@@ -20,7 +20,7 @@ Below are the main modules we implemented and designed, along with brief descrip
 
 ## Program Flow Overview ##
 Below is a high-level overview of a typical interaction with the system. Each step references a broad set of states that are group together based on their general role (For a complete visual reference, see the state diagram below).<br>
-<img src="https://github.com/ColinRiker/373Project_PhoneLockBox/blob/d6381f0d4689542a73fa41ce20f82c38fbb8303c/graphics/StateDriagram.png" alt="State Diagram" style="width:400px; height:auto;">
+<img src="" alt="State Diagram" style="width:400px; height:auto;">
 
 
 ### Startup ###
