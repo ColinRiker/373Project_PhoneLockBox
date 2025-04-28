@@ -20,7 +20,7 @@ Below are the main modules we implemented and designed, along with brief descrip
 ## Program Flow Overview ##
 Below is a high-level overview of a typical interaction with the system. Each step references a broad set of states that are group together based on their general role (For a complete visual reference, see the state diagram below).<br>
 <p align="center">
-<img src="graphics/StateDriagram.svg" alt="State Diagram" style="width:400px; height:auto;"></p>
+<img src="graphics/StateDriagram.svg" alt="State Diagram" style="width:800px; height:auto;"></p>
 
 
 ### Startup ###
@@ -63,9 +63,9 @@ This invariant ensures minimal active scheduling at any given time, simplifying 
 ## Hardware Overview ##
 Below are a few of our hardware diagrams that we used to help visualize and plan for the physical parts of our project.
 <p align="center">
-<img src="graphics/SystemDiagram.svg" alt="System Diagram" style="width:400px; height:auto;"><br>
+<img src="graphics/SystemDiagram.svg" alt="System Diagram" style="width:600px; height:auto;"><br>
 </p>
 
 <p align="center">
-<img src="graphics/PinOutDiagram.png" alt="Pinout diagram" style="width:50%; height:auto;">
+<img src="graphics/PinOutDiagram.png" alt="Pinout diagram" style="width:600px; height:auto;">
 </p>
