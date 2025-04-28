@@ -5,7 +5,7 @@ This project is a lockbox for your phone, designed to reduce distractions and he
 
 ## Module Overview ##
 Below are the main modules we implemented and designed, along with brief descriptions of each. For further details on their functionality, please refer to the individual files (particularly for non-trivial functions).<br><br>
-- [`Shared.h`](PhoneLockBox/Core/Inc/Shared.h) — Contains project-wide definitions, data types, and some debug-specific functions.
+- [`Shared.h`](PhoneLockBox/Core/Inc/shared.h) — Contains project-wide definitions, data types, and some debug-specific functions.
 - [`accelerometer.c`](PhoneLockBox/Core/Src/accelerometer.c) — Holds all the implementation details relevant to the accelerometer and magnetometer, including their event functions.
 - [`audio.c`](PhoneLockBox/Core/Src/audio.c) — Where all the audio detection and unlocking functions exist. The header file contains the tuning parameters.
 - [`event_controller.c`](PhoneLockBox/Core/Src/event_controller.c) — This is our very minimal real-time operating system. It implements a very bare-bones scheduler that takes in all of our non-interrupt-based events/processes and runs them either periodically, once, or for some n times.
