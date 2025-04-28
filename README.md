@@ -4,7 +4,6 @@
 This project is a lockbox for your phone, designed to reduce distractions and help students stay focused. Here, we outline the various modules, provide a system overview, and describe our hardware setup. Specific functions and their implementations are covered within their respective modules and are not detailed here.
 
 ## Module Overview ##
-<img src="" alt="System Diagram" style="width:400px; height:auto;"><br>
 Below are the main modules we implemented and designed, along with brief descriptions of each. For further details on their functionality, please refer to the individual files (particularly for non-trivial functions).<br><br>
 - [`Shared.h`](PhoneLockBox/Core/Inc/Shared.h) — Contains project-wide definitions, data types, and some debug-specific functions.
 - [`accelerometer.c`](PhoneLockBox/Core/Src/accelerometer.c) — Holds all the implementation details relevant to the accelerometer and magnetometer, including their event functions.
@@ -20,7 +19,8 @@ Below are the main modules we implemented and designed, along with brief descrip
 
 ## Program Flow Overview ##
 Below is a high-level overview of a typical interaction with the system. Each step references a broad set of states that are group together based on their general role (For a complete visual reference, see the state diagram below).<br>
-<img src="" alt="State Diagram" style="width:400px; height:auto;">
+<p align="center">
+<img src="graphics/StateDriagram.svg" alt="State Diagram" style="width:400px; height:auto;"></p>
 
 
 ### Startup ###
@@ -61,4 +61,11 @@ This invariant ensures minimal active scheduling at any given time, simplifying 
 
 
 ## Hardware Overview ##
-<img src="" alt="Pinout diagram" style="width:50%; height:auto;">
+Below are a few of our hardware diagrams that we used to help visualize and plan for the physical parts of our project.
+<p align="center">
+<img src="graphics/SystemDiagram.svg" alt="System Diagram" style="width:400px; height:auto;"><br>
+</p>
+
+<p align="center">
+<img src="graphics/PinOutDiagram.png" alt="Pinout diagram" style="width:50%; height:auto;">
+</p>

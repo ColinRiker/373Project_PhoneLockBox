@@ -152,7 +152,12 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-	ILI9341_Init();//initial driver setup to drive ili9341
+
+  	  /*
+  	   * All of the initationals for our system and first pass
+  	   * calls to establish state
+  	   * */
+	ILI9341_Init();
 	ILI9341_Fill_Screen(WHITE);
 	PN532_I2C_Init(&pn532);
 	accInit();
@@ -179,18 +184,23 @@ int main(void)
 		runStateMachine();
 		eventRunner();
 
-		// Poor Mans Sampling, or PM Sampling, if the delta is too big remove the data point!
-		// no need to deal with complex wrap around logic or direction determination!
+		/*
+		 * The code below handles rotary encoder pass through into
+		 * the master timer
+		 */
 		if(state == UNLOCKED_EMPTY_AWAKE) {
 			int32_t delta = rotencGetDelta();
 
 			if (delta) { //Check mag^2 of delta
-				//printf("DELTA: %ld\r\n", delta);
 				lockTimerSetTime(lockTimerGetTime() + (delta * 30000));
 				UEA_Timer_Update();
 
 			}
 		}
+
+		/*
+		 * This drives screen updates as the timer decrements
+		 */
 		if(state == LOCKED_FULL_AWAKE || state == LOCKED_MONITOR_AWAKE){
 			if (lockTimerGetTime() % 1500 == 0) {
 				Ring_Update();

@@ -58,6 +58,14 @@ bool stateInsertFlag(SFlag flag) {
     return false;  // no available spots to insert the flag
 }
 
+void stateRemoveFlag(SFlag flag) {
+	for(uint8_t i = 0; i < MAX_FLAGS; ++i) {
+		if (flags[i] == flag) {
+			flags[i] = SFLAG_NULL;
+		}
+	}
+}
+
 // clears all flags by resetting them to SFLAG_NULL
 void clearFlags(void) {
     for (uint8_t i = 0; i < MAX_FLAGS; ++i) {

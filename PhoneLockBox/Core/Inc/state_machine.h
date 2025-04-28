@@ -35,6 +35,7 @@ void stateMachineInit(void);
 void runStateMachine(void);
 void stateTransitionCleanup(BoxState next);
 bool stateInsertFlag(SFlag flag);
+void stateRemoveFlag(SFlag flag);
 void stateScheduleEvents(void);
 void clearFlags(void);
 void inturruptControl(void);

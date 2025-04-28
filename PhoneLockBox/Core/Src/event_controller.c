@@ -14,16 +14,16 @@ extern TIM_HandleTypeDef htim3;
 /* Event Global Declarations
  *	events: stores all active event records currently scheduled
  *	time_ms: is the time reference incremented by the timer interrupt
-*/
+ */
 Event events[MAX_EVENT_COUNT];
 uint32_t time_ms;
 
 /* eventRegister()
-*  	Creates an event record from the pass paramters and
-*	calls eventSchedule on the new record after adding it to
-*	the events array. Acts as the entry point for interaction
-*	with the event system.
-*/
+ *  	Creates an event record from the pass paramters and
+ *	calls eventSchedule on the new record after adding it to
+ *	the events array. Acts as the entry point for interaction
+ *	with the event system.
+ */
 EventReturnCode eventRegister(void *callback, EventLabel label, EventFlag flag, uint16_t delta, uint8_t n_runs) {
 	uint16_t context = delta;
 
@@ -67,8 +67,8 @@ void eventRemove(uint8_t idx) {
 }
 
 /* eventClear()
-*	walks the events array removing any events found
-*/
+ *	walks the events array removing any events found
+ */
 void eventClear(void) {
 	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
 		if(events[i].label != EVENT_EMPTY) {
@@ -91,10 +91,10 @@ EventReturnCode eventControllerInit(void) {
 }
 
 /* eventSchedule()
-*	takes the idx of an event and depending on its scheduling flag
-*	sets it's scheduling time for when the eventRunner should call
-*	its callback. Immedaiates, N repeats
-*/
+ *	takes the idx of an event and depending on its scheduling flag
+ *	sets it's scheduling time for when the eventRunner should call
+ *	its callback. Immedaiates, N repeats
+ */
 EventReturnCode eventSchedule(uint8_t idx) {
 	uint8_t schedule_offset = time_ms % 7; //Hopefully helps to cheaply redistribute scheduling
 
@@ -132,6 +132,15 @@ EventReturnCode eventSchedule(uint8_t idx) {
 	return EVENT_SUCCESS;
 }
 
+/* eventRunner()
+ * 	This function serves as the executor of event callbacks. It simply
+ * 	iterates the event loop looking for valid and ready to be run events.
+ * 	After it calls an events callback it executes the switch statement to
+ * 	see how rescheduling should be handled. Immedates are downgraded to
+ * 	their non-immeidate varities. N repeat events have their context fields
+ * 	motifided to decrement how many more runs they have. Once they get to
+ * 	a single remaining run they become singles.
+ * */
 void eventRunner(void) {
 	for (uint8_t i = 0; i < MAX_EVENT_COUNT; ++i) {
 		if (events[i].schedule_time <= time_ms && events[i].label != EVENT_EMPTY) {
@@ -186,24 +195,28 @@ void eventRunner(void) {
 }
 
 /* eventTimerCallback()
-*	A simple callback to insert the timer complete flag after a
-*	scheduled amount of time, used for timeouts typically
-*/
+ *	A simple callback to insert the timer complete flag after a
+ *	scheduled amount of time, used for timeouts typically
+ */
 void eventTimerCallback(void) {
 	stateInsertFlag(SFLAG_TIMER_COMPLETE);
 }
 
 /* eventDefaultCallback()
-*	on remove or intialization all events are assigned this
-*	callback to ensure we're never calling into random areas
-*	and provideds debugging if we have misbehaving or bad events
-*/
+ *	on remove or intialization all events are assigned this
+ *	callback to ensure we're never calling into random areas
+ *	and provideds debugging if we have misbehaving or bad events
+ */
 void eventDefaultCallback(void) {
 #ifdef DEBUG_EVENT_CONTROLLER
 	printf("[ERROR] Default Event Callback called\n\r");
 #endif
 }
 
+/* Debugging Functions
+ * 	Below are all the debugging functions needed for the event system
+ * 	and its structs/enums
+ */
 #ifdef DEBUG_EVENT_CONTROLLER
 void eventPrint(Event *event) {
 	printf("Label: %s, Flag: %s, Context: %x, Ptr: %lu\n\r",

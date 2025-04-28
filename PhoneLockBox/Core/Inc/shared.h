@@ -10,7 +10,7 @@
 
 
 #define I2C_TIMEOUT 1000
-#define DEBUG_OUT //Comment out to not compile debug functions and statement
+//#define DEBUG_OUT //Comment out to not compile debug functions and statement
 
 #ifdef DEBUG_OUT
 #define DEBUG_EVENT_CONTROLLER
